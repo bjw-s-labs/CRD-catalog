@@ -3065,6 +3065,10 @@
           "type": "object",
           "additionalProperties": false
         },
+        "skipForks": {
+          "description": "If true, forked repositories discovered during autodiscovery will be excluded by querying the platform API",
+          "type": "boolean"
+        },
         "tolerations": {
           "description": "Tolerations for scheduling the resulting pod",
           "items": {
