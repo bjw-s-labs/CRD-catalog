@@ -803,6 +803,13 @@
           "type": "object",
           "additionalProperties": false
         },
+        "allowedGroups": {
+          "description": "Groups allowed to view this RenovateJob when authentication is enabled.\nIf empty or not set, the job is hidden from all users.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "discoverTopics": {
           "description": "Topics to discover projects from",
           "type": "string"
@@ -3218,6 +3225,65 @@
             },
             "enabled": {
               "type": "boolean"
+            },
+            "forgejo": {
+              "description": "Forgejo-specific webhook configuration",
+              "properties": {
+                "sync": {
+                  "description": "configuration for syncing webhooks to Forgejo repos by topic",
+                  "properties": {
+                    "authTokenSecretRef": {
+                      "description": "reference to a secret and key",
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object",
+                      "additionalProperties": false
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "events": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "tokenSecretRef": {
+                      "description": "reference to a secret and key",
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object",
+                      "additionalProperties": false
+                    },
+                    "topic": {
+                      "type": "string"
+                    },
+                    "webhookURL": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "enabled",
+                    "webhookURL"
+                  ],
+                  "type": "object",
+                  "additionalProperties": false
+                }
+              },
+              "type": "object",
+              "additionalProperties": false
             }
           },
           "required": [
