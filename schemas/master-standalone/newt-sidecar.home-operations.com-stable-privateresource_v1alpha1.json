@@ -1,0 +1,88 @@
+{
+  "description": "PrivateResource is the Schema for Pangolin private-resources.\nEach instance produces one entry in the blueprint's private-resources block,\nenabling OLM VPN clients to reach cluster-internal networks or hosts.",
+  "properties": {
+    "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+      "type": "string"
+    },
+    "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "spec": {
+      "description": "PrivateResourceSpec defines the desired state of a Pangolin private-resource.\nEach CR produces one entry in the blueprint's private-resources block.\nThe site field is intentionally absent \u2014 it is injected from the sidecar's --site-id flag.",
+      "properties": {
+        "alias": {
+          "description": "Alias is a fully-qualified domain name alias for the resource.\nRequired when mode is \"host\" and destination is a hostname (not an IP).",
+          "type": "string"
+        },
+        "destination": {
+          "description": "Destination is the IP address, hostname, or CIDR range to tunnel to.\nIn cidr mode this must be a valid CIDR (e.g. 10.42.0.0/16).\nIn host mode this can be an IP address or a hostname (alias required for hostnames).",
+          "minLength": 1,
+          "type": "string"
+        },
+        "disableIcmp": {
+          "default": false,
+          "description": "DisableIcmp disables ICMP (ping) tunnelling for this resource.",
+          "type": "boolean"
+        },
+        "machines": {
+          "description": "Machines restricts access to these Pangolin machine client IDs.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "mode": {
+          "description": "Mode controls whether this resource tunnels to a single host or a CIDR range.",
+          "enum": [
+            "host",
+            "cidr"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the display name of the private resource in Pangolin.",
+          "maxLength": 255,
+          "minLength": 1,
+          "type": "string"
+        },
+        "roles": {
+          "description": "Roles restricts access to OLM clients that have one of these Pangolin roles.\nMust not include \"Admin\".",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "tcpPorts": {
+          "default": "*",
+          "description": "TcpPorts is the set of TCP ports to expose. Defaults to \"*\" (all ports).",
+          "type": "string"
+        },
+        "udpPorts": {
+          "default": "*",
+          "description": "UdpPorts is the set of UDP ports to expose. Defaults to \"*\" (all ports).",
+          "type": "string"
+        },
+        "users": {
+          "description": "Users restricts access to these Pangolin user email addresses.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "destination",
+        "mode",
+        "name"
+      ],
+      "type": "object",
+      "additionalProperties": false
+    }
+  },
+  "type": "object"
+}
