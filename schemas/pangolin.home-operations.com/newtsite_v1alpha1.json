@@ -57,6 +57,11 @@
               "description": "EnableServiceDiscovery enables Service discovery for this site.\nWhen false (default), Services are not auto-discovered even if annotated.\nSet to true to enable event-driven and periodic Service scanning.",
               "type": "boolean"
             },
+            "enableTCPRouteDiscovery": {
+              "default": false,
+              "description": "EnableTCPRouteDiscovery enables Gateway API TCPRoute discovery for this site.\nWhen false (default), TCPRoutes are not auto-discovered even if annotated.\nSet to true to enable event-driven and periodic TCPRoute scanning.",
+              "type": "boolean"
+            },
             "gatewayName": {
               "description": "GatewayName filters HTTPRoutes by spec.parentRefs[].name.\nWhen empty, all HTTPRoutes carrying the site-ref annotation are processed.",
               "type": "string"
@@ -5656,7 +5661,6 @@
               "default": 1,
               "description": "Replicas for the Deployment",
               "format": "int32",
-              "maximum": 1,
               "minimum": 0,
               "type": "integer"
             },
