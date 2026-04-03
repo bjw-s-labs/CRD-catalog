@@ -1,0 +1,790 @@
+{
+  "description": "MCPRegistry is the Schema for the mcpregistries API",
+  "properties": {
+    "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+      "type": "string"
+    },
+    "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "spec": {
+      "description": "MCPRegistrySpec defines the desired state of MCPRegistry",
+      "properties": {
+        "authConfig": {
+          "description": "AuthConfig defines the authentication configuration for the registry API server.\nIf not specified, defaults to anonymous authentication.",
+          "properties": {
+            "mode": {
+              "default": "anonymous",
+              "description": "Mode specifies the authentication mode (anonymous or oauth)\nDefaults to \"anonymous\" if not specified.\nUse \"oauth\" to enable OAuth/OIDC authentication.",
+              "enum": [
+                "anonymous",
+                "oauth"
+              ],
+              "type": "string"
+            },
+            "oauth": {
+              "description": "OAuth defines OAuth/OIDC specific authentication settings\nOnly used when Mode is \"oauth\"",
+              "properties": {
+                "providers": {
+                  "description": "Providers defines the OAuth/OIDC providers for authentication\nMultiple providers can be configured (e.g., Kubernetes + external IDP)",
+                  "items": {
+                    "description": "MCPRegistryOAuthProviderConfig defines configuration for an OAuth/OIDC provider",
+                    "properties": {
+                      "allowPrivateIP": {
+                        "default": false,
+                        "description": "AllowPrivateIP allows JWKS/OIDC endpoints on private IP addresses\nRequired when the OAuth provider (e.g., Kubernetes API server) is running on a private network\nExample: Set to true when using https://kubernetes.default.svc as the issuer URL",
+                        "type": "boolean"
+                      },
+                      "audience": {
+                        "description": "Audience is the expected audience claim in the token (REQUIRED)\nPer RFC 6749 Section 4.1.3, tokens must be validated against expected audience\nFor Kubernetes, this is typically the API server URL",
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "authTokenFile": {
+                        "description": "AuthTokenFile is the path to a file containing a bearer token for authenticating to OIDC/JWKS endpoints.\nUseful when the OIDC discovery or JWKS endpoint requires authentication.\nExample: /var/run/secrets/kubernetes.io/serviceaccount/token",
+                        "type": "string"
+                      },
+                      "authTokenRef": {
+                        "description": "AuthTokenRef is a reference to a Secret containing a bearer token for authenticating\nto OIDC/JWKS endpoints. Useful when the OIDC discovery or JWKS endpoint requires authentication.\nExample: ServiceAccount token for Kubernetes API server",
+                        "properties": {
+                          "key": {
+                            "description": "The key of the secret to select from.  Must be a valid secret key.",
+                            "type": "string"
+                          },
+                          "name": {
+                            "default": "",
+                            "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                            "type": "string"
+                          },
+                          "optional": {
+                            "description": "Specify whether the Secret or its key must be defined",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "type": "object",
+                        "x-kubernetes-map-type": "atomic",
+                        "additionalProperties": false
+                      },
+                      "caCertPath": {
+                        "description": "CaCertPath is the path to the CA certificate bundle for verifying the provider's TLS certificate.\nRequired for Kubernetes in-cluster authentication or self-signed certificates",
+                        "type": "string"
+                      },
+                      "caCertRef": {
+                        "description": "CACertRef is a reference to a ConfigMap containing the CA certificate bundle\nfor verifying the provider's TLS certificate.\nRequired for Kubernetes in-cluster authentication or self-signed certificates",
+                        "properties": {
+                          "key": {
+                            "description": "The key to select.",
+                            "type": "string"
+                          },
+                          "name": {
+                            "default": "",
+                            "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                            "type": "string"
+                          },
+                          "optional": {
+                            "description": "Specify whether the ConfigMap or its key must be defined",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "type": "object",
+                        "x-kubernetes-map-type": "atomic",
+                        "additionalProperties": false
+                      },
+                      "clientId": {
+                        "description": "ClientID is the OAuth client ID for token introspection (optional)",
+                        "type": "string"
+                      },
+                      "clientSecretRef": {
+                        "description": "ClientSecretRef is a reference to a Secret containing the client secret\nThe secret should have a key \"clientSecret\" containing the secret value",
+                        "properties": {
+                          "key": {
+                            "description": "The key of the secret to select from.  Must be a valid secret key.",
+                            "type": "string"
+                          },
+                          "name": {
+                            "default": "",
+                            "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                            "type": "string"
+                          },
+                          "optional": {
+                            "description": "Specify whether the Secret or its key must be defined",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "type": "object",
+                        "x-kubernetes-map-type": "atomic",
+                        "additionalProperties": false
+                      },
+                      "introspectionUrl": {
+                        "description": "IntrospectionURL is the OAuth 2.0 Token Introspection endpoint (RFC 7662)\nUsed for validating opaque (non-JWT) tokens\nIf not specified, only JWT tokens can be validated via JWKS",
+                        "pattern": "^https?://.*",
+                        "type": "string"
+                      },
+                      "issuerUrl": {
+                        "description": "IssuerURL is the OIDC issuer URL (e.g., https://accounts.google.com)\nThe JWKS URL will be discovered automatically from .well-known/openid-configuration\nunless JwksUrl is explicitly specified",
+                        "minLength": 1,
+                        "pattern": "^https?://.*",
+                        "type": "string"
+                      },
+                      "jwksUrl": {
+                        "description": "JwksUrl is the URL to fetch the JSON Web Key Set (JWKS) from\nIf specified, OIDC discovery is skipped and this URL is used directly\nExample: https://kubernetes.default.svc/openid/v1/jwks",
+                        "pattern": "^https?://.*",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "Name is a unique identifier for this provider (e.g., \"kubernetes\", \"keycloak\")",
+                        "minLength": 1,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "audience",
+                      "issuerUrl",
+                      "name"
+                    ],
+                    "type": "object",
+                    "additionalProperties": false
+                  },
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "realm": {
+                  "description": "Realm is the protection space identifier for WWW-Authenticate header (RFC 7235)\nDefaults to \"mcp-registry\" if not specified",
+                  "type": "string"
+                },
+                "resourceUrl": {
+                  "description": "ResourceURL is the URL identifying this protected resource (RFC 9728)\nUsed in the /.well-known/oauth-protected-resource endpoint",
+                  "type": "string"
+                },
+                "scopesSupported": {
+                  "description": "ScopesSupported defines the OAuth scopes supported by this resource (RFC 9728)\nDefaults to [\"mcp-registry:read\", \"mcp-registry:write\"] if not specified",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "type": "object",
+              "additionalProperties": false
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        },
+        "databaseConfig": {
+          "description": "DatabaseConfig defines the PostgreSQL database configuration for the registry API server.\nIf not specified, defaults will be used:\n  - Host: \"postgres\"\n  - Port: 5432\n  - User: \"db_app\"\n  - MigrationUser: \"db_migrator\"\n  - Database: \"registry\"\n  - SSLMode: \"prefer\"\n  - MaxOpenConns: 10\n  - MaxIdleConns: 2\n  - ConnMaxLifetime: \"30m\"",
+          "properties": {
+            "connMaxLifetime": {
+              "default": "30m",
+              "description": "ConnMaxLifetime is the maximum amount of time a connection may be reused (Go duration format)\nExamples: \"30m\", \"1h\", \"24h\"",
+              "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|\u00b5s|ms|s|m|h))+$",
+              "type": "string"
+            },
+            "database": {
+              "default": "registry",
+              "description": "Database is the database name",
+              "type": "string"
+            },
+            "dbAppUserPasswordSecretRef": {
+              "description": "DBAppUserPasswordSecretRef references a Kubernetes Secret containing the password for the application database user.\nThe operator will use this password along with DBMigrationUserPasswordSecretRef to generate a pgpass file\nthat is mounted to the registry API container.",
+              "properties": {
+                "key": {
+                  "description": "The key of the secret to select from.  Must be a valid secret key.",
+                  "type": "string"
+                },
+                "name": {
+                  "default": "",
+                  "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                  "type": "string"
+                },
+                "optional": {
+                  "description": "Specify whether the Secret or its key must be defined",
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "key"
+              ],
+              "type": "object",
+              "x-kubernetes-map-type": "atomic",
+              "additionalProperties": false
+            },
+            "dbMigrationUserPasswordSecretRef": {
+              "description": "DBMigrationUserPasswordSecretRef references a Kubernetes Secret containing the password for the migration database user.\nThe operator will use this password along with DBAppUserPasswordSecretRef to generate a pgpass file\nthat is mounted to the registry API container.",
+              "properties": {
+                "key": {
+                  "description": "The key of the secret to select from.  Must be a valid secret key.",
+                  "type": "string"
+                },
+                "name": {
+                  "default": "",
+                  "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                  "type": "string"
+                },
+                "optional": {
+                  "description": "Specify whether the Secret or its key must be defined",
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "key"
+              ],
+              "type": "object",
+              "x-kubernetes-map-type": "atomic",
+              "additionalProperties": false
+            },
+            "host": {
+              "default": "postgres",
+              "description": "Host is the database server hostname",
+              "type": "string"
+            },
+            "maxIdleConns": {
+              "default": 2,
+              "description": "MaxIdleConns is the maximum number of idle connections in the pool",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "maxOpenConns": {
+              "default": 10,
+              "description": "MaxOpenConns is the maximum number of open connections to the database",
+              "minimum": 1,
+              "type": "integer"
+            },
+            "migrationUser": {
+              "default": "db_migrator",
+              "description": "MigrationUser is the migration user (elevated privileges: CREATE, ALTER, DROP)\nUsed for running database schema migrations\nCredentials should be provided via pgpass file or environment variables",
+              "type": "string"
+            },
+            "port": {
+              "default": 5432,
+              "description": "Port is the database server port",
+              "maximum": 65535,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "sslMode": {
+              "default": "prefer",
+              "description": "SSLMode is the SSL mode for the connection\nValid values: disable, allow, prefer, require, verify-ca, verify-full",
+              "enum": [
+                "disable",
+                "allow",
+                "prefer",
+                "require",
+                "verify-ca",
+                "verify-full"
+              ],
+              "type": "string"
+            },
+            "user": {
+              "default": "db_app",
+              "description": "User is the application user (limited privileges: SELECT, INSERT, UPDATE, DELETE)\nCredentials should be provided via pgpass file or environment variables",
+              "type": "string"
+            }
+          },
+          "required": [
+            "dbAppUserPasswordSecretRef",
+            "dbMigrationUserPasswordSecretRef"
+          ],
+          "type": "object",
+          "additionalProperties": false
+        },
+        "displayName": {
+          "description": "DisplayName is a human-readable name for the registry",
+          "type": "string"
+        },
+        "enforceServers": {
+          "default": false,
+          "description": "EnforceServers indicates whether MCPServers in this namespace must have their images\npresent in at least one registry in the namespace. When any registry in the namespace\nhas this field set to true, enforcement is enabled for the entire namespace.\nMCPServers with images not found in any registry will be rejected.\nWhen false (default), MCPServers can be deployed regardless of registry presence.",
+          "type": "boolean"
+        },
+        "podTemplateSpec": {
+          "description": "PodTemplateSpec defines the pod template to use for the registry API server\nThis allows for customizing the pod configuration beyond what is provided by the other fields.\nNote that to modify the specific container the registry API server runs in, you must specify\nthe `registry-api` container name in the PodTemplateSpec.\nThis field accepts a PodTemplateSpec object as JSON/YAML.",
+          "type": "object",
+          "x-kubernetes-preserve-unknown-fields": true
+        },
+        "registries": {
+          "description": "Registries defines the configuration for the registry data sources",
+          "items": {
+            "description": "MCPRegistryConfig defines the configuration for a registry data source",
+            "properties": {
+              "api": {
+                "description": "API defines the API source configuration\nMutually exclusive with ConfigMapRef, Git, and PVCRef",
+                "properties": {
+                  "endpoint": {
+                    "description": "Endpoint is the base API URL (without path)\nThe controller will append the appropriate paths:\nPhase 1 (ToolHive API):\n  - /v0/servers - List all servers (single response, no pagination)\n  - /v0/servers/{name} - Get specific server (future)\n  - /v0/info - Get registry metadata (future)\nExample: \"http://my-registry-api.default.svc.cluster.local/api\"",
+                    "minLength": 1,
+                    "pattern": "^https?://.*",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "endpoint"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              },
+              "configMapRef": {
+                "description": "ConfigMapRef defines the ConfigMap source configuration\nMutually exclusive with Git, API, and PVCRef",
+                "properties": {
+                  "key": {
+                    "description": "The key to select.",
+                    "type": "string"
+                  },
+                  "name": {
+                    "default": "",
+                    "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                    "type": "string"
+                  },
+                  "optional": {
+                    "description": "Specify whether the ConfigMap or its key must be defined",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "key"
+                ],
+                "type": "object",
+                "x-kubernetes-map-type": "atomic",
+                "additionalProperties": false
+              },
+              "filter": {
+                "description": "Filter defines include/exclude patterns for registry content",
+                "properties": {
+                  "names": {
+                    "description": "NameFilters defines name-based filtering",
+                    "properties": {
+                      "exclude": {
+                        "description": "Exclude is a list of glob patterns to exclude",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "include": {
+                        "description": "Include is a list of glob patterns to include",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "type": "object",
+                    "additionalProperties": false
+                  },
+                  "tags": {
+                    "description": "Tags defines tag-based filtering",
+                    "properties": {
+                      "exclude": {
+                        "description": "Exclude is a list of tags to exclude",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "include": {
+                        "description": "Include is a list of tags to include",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                },
+                "type": "object",
+                "additionalProperties": false
+              },
+              "format": {
+                "default": "toolhive",
+                "description": "Format is the data format (toolhive, upstream)",
+                "enum": [
+                  "toolhive",
+                  "upstream"
+                ],
+                "type": "string"
+              },
+              "git": {
+                "description": "Git defines the Git repository source configuration\nMutually exclusive with ConfigMapRef, API, and PVCRef",
+                "properties": {
+                  "auth": {
+                    "description": "Auth defines optional authentication for private Git repositories.\nWhen specified, enables HTTP Basic authentication using the provided\nusername and password/token from a Kubernetes Secret.",
+                    "properties": {
+                      "passwordSecretRef": {
+                        "description": "PasswordSecretRef references a Kubernetes Secret containing the password or token\nfor Git authentication. The secret value will be mounted as a file and its path\npassed to the registry server via the git.auth.passwordFile configuration.\n\nExample secret:\n  apiVersion: v1\n  kind: Secret\n  metadata:\n    name: git-credentials\n  stringData:\n    token: <github token>\n\nThen reference it as:\n  passwordSecretRef:\n    name: git-credentials\n    key: token",
+                        "properties": {
+                          "key": {
+                            "description": "The key of the secret to select from.  Must be a valid secret key.",
+                            "type": "string"
+                          },
+                          "name": {
+                            "default": "",
+                            "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                            "type": "string"
+                          },
+                          "optional": {
+                            "description": "Specify whether the Secret or its key must be defined",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "type": "object",
+                        "x-kubernetes-map-type": "atomic",
+                        "additionalProperties": false
+                      },
+                      "username": {
+                        "description": "Username is the Git username for HTTP Basic authentication.\nFor GitHub/GitLab token-based auth, this is typically the literal string \"git\"\nor the token itself depending on the provider.",
+                        "minLength": 1,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "passwordSecretRef",
+                      "username"
+                    ],
+                    "type": "object",
+                    "additionalProperties": false
+                  },
+                  "branch": {
+                    "description": "Branch is the Git branch to use (mutually exclusive with Tag and Commit)",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "commit": {
+                    "description": "Commit is the Git commit SHA to use (mutually exclusive with Branch and Tag)",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "path": {
+                    "default": "registry.json",
+                    "description": "Path is the path to the registry file within the repository",
+                    "pattern": "^.*\\.json$",
+                    "type": "string"
+                  },
+                  "repository": {
+                    "description": "Repository is the Git repository URL (HTTP/HTTPS/SSH)",
+                    "minLength": 1,
+                    "pattern": "^(file:///|https?://|git@|ssh://|git://).*",
+                    "type": "string"
+                  },
+                  "tag": {
+                    "description": "Tag is the Git tag to use (mutually exclusive with Branch and Commit)",
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "repository"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              },
+              "name": {
+                "description": "Name is a unique identifier for this registry configuration within the MCPRegistry",
+                "minLength": 1,
+                "type": "string"
+              },
+              "pvcRef": {
+                "description": "PVCRef defines the PersistentVolumeClaim source configuration\nMutually exclusive with ConfigMapRef, Git, and API",
+                "properties": {
+                  "claimName": {
+                    "description": "ClaimName is the name of the PersistentVolumeClaim",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "path": {
+                    "default": "registry.json",
+                    "description": "Path is the relative path to the registry file within the PVC.\nThe PVC is mounted at /config/registry/{registryName}/.\nThe full file path becomes: /config/registry/{registryName}/{path}\n\nThis design:\n- Each registry gets its own mount point (consistent with ConfigMap sources)\n- Multiple registries can share the same PVC by mounting it at different paths\n- Users control PVC organization freely via the path field\n\nExamples:\n  Registry \"production\" using PVC \"shared-data\" with path \"prod/registry.json\":\n    PVC contains /prod/registry.json \u2192 accessed at /config/registry/production/prod/registry.json\n\n  Registry \"development\" using SAME PVC \"shared-data\" with path \"dev/registry.json\":\n    PVC contains /dev/registry.json \u2192 accessed at /config/registry/development/dev/registry.json\n    (Same PVC, different mount path)\n\n  Registry \"staging\" using DIFFERENT PVC \"other-pvc\" with path \"registry.json\":\n    PVC contains /registry.json \u2192 accessed at /config/registry/staging/registry.json\n    (Different PVC, independent mount)\n\n  Registry \"team-a\" with path \"v1/servers.json\":\n    PVC contains /v1/servers.json \u2192 accessed at /config/registry/team-a/v1/servers.json\n    (Subdirectories allowed in path)",
+                    "pattern": "^.*\\.json$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "claimName"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              },
+              "syncPolicy": {
+                "description": "SyncPolicy defines the automatic synchronization behavior for this registry.\nIf specified, enables automatic synchronization at the given interval.\nManual synchronization is always supported via annotation-based triggers\nregardless of this setting.",
+                "properties": {
+                  "interval": {
+                    "description": "Interval is the sync interval for automatic synchronization (Go duration format)\nExamples: \"1h\", \"30m\", \"24h\"",
+                    "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|\u00b5s|ms|s|m|h))+$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "interval"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "registries"
+      ],
+      "type": "object",
+      "additionalProperties": false
+    },
+    "status": {
+      "description": "MCPRegistryStatus defines the observed state of MCPRegistry",
+      "properties": {
+        "apiStatus": {
+          "description": "APIStatus provides detailed information about the API service",
+          "properties": {
+            "endpoint": {
+              "description": "Endpoint is the URL where the API is accessible",
+              "type": "string"
+            },
+            "message": {
+              "description": "Message provides additional information about the API status",
+              "type": "string"
+            },
+            "phase": {
+              "allOf": [
+                {
+                  "enum": [
+                    "NotStarted",
+                    "Deploying",
+                    "Ready",
+                    "Unhealthy",
+                    "Error"
+                  ]
+                },
+                {
+                  "enum": [
+                    "NotStarted",
+                    "Deploying",
+                    "Ready",
+                    "Unhealthy",
+                    "Error"
+                  ]
+                }
+              ],
+              "description": "Phase represents the current API service phase",
+              "type": "string"
+            },
+            "readySince": {
+              "description": "ReadySince is the timestamp when the API became ready",
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          "required": [
+            "phase"
+          ],
+          "type": "object",
+          "additionalProperties": false
+        },
+        "conditions": {
+          "description": "Conditions represent the latest available observations of the MCPRegistry's state",
+          "items": {
+            "description": "Condition contains details for one aspect of the current state of this API Resource.",
+            "properties": {
+              "lastTransitionTime": {
+                "description": "lastTransitionTime is the last time the condition transitioned from one status to another.\nThis should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "message": {
+                "description": "message is a human readable message indicating details about the transition.\nThis may be an empty string.",
+                "maxLength": 32768,
+                "type": "string"
+              },
+              "observedGeneration": {
+                "description": "observedGeneration represents the .metadata.generation that the condition was set based upon.\nFor instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date\nwith respect to the current state of the instance.",
+                "format": "int64",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "reason": {
+                "description": "reason contains a programmatic identifier indicating the reason for the condition's last transition.\nProducers of specific condition types may define expected values and meanings for this field,\nand whether the values are considered a guaranteed API.\nThe value should be a CamelCase string.\nThis field may not be empty.",
+                "maxLength": 1024,
+                "minLength": 1,
+                "pattern": "^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$",
+                "type": "string"
+              },
+              "status": {
+                "description": "status of the condition, one of True, False, Unknown.",
+                "enum": [
+                  "True",
+                  "False",
+                  "Unknown"
+                ],
+                "type": "string"
+              },
+              "type": {
+                "description": "type of condition in CamelCase or in foo.example.com/CamelCase.",
+                "maxLength": 316,
+                "pattern": "^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "lastTransitionTime",
+              "message",
+              "reason",
+              "status",
+              "type"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "type"
+          ],
+          "x-kubernetes-list-type": "map"
+        },
+        "lastAppliedFilterHash": {
+          "description": "LastAppliedFilterHash is the hash of the last applied filter",
+          "type": "string"
+        },
+        "lastManualSyncTrigger": {
+          "description": "LastManualSyncTrigger tracks the last processed manual sync annotation value\nUsed to detect new manual sync requests via toolhive.stacklok.dev/sync-trigger annotation",
+          "type": "string"
+        },
+        "message": {
+          "description": "Message provides additional information about the current phase",
+          "type": "string"
+        },
+        "phase": {
+          "description": "Phase represents the current overall phase of the MCPRegistry\nDerived from sync and API status",
+          "enum": [
+            "Pending",
+            "Ready",
+            "Failed",
+            "Syncing",
+            "Terminating"
+          ],
+          "type": "string"
+        },
+        "storageRef": {
+          "description": "StorageRef is a reference to the internal storage location",
+          "properties": {
+            "configMapRef": {
+              "description": "ConfigMapRef is a reference to a ConfigMap storage\nOnly used when Type is \"configmap\"",
+              "properties": {
+                "name": {
+                  "default": "",
+                  "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                  "type": "string"
+                }
+              },
+              "type": "object",
+              "x-kubernetes-map-type": "atomic",
+              "additionalProperties": false
+            },
+            "type": {
+              "description": "Type is the storage type (configmap)",
+              "enum": [
+                "configmap"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object",
+          "additionalProperties": false
+        },
+        "syncStatus": {
+          "description": "SyncStatus provides detailed information about data synchronization",
+          "properties": {
+            "attemptCount": {
+              "description": "AttemptCount is the number of sync attempts since last success",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "lastAttempt": {
+              "description": "LastAttempt is the timestamp of the last sync attempt",
+              "format": "date-time",
+              "type": "string"
+            },
+            "lastSyncHash": {
+              "description": "LastSyncHash is the hash of the last successfully synced data\nUsed to detect changes in source data",
+              "type": "string"
+            },
+            "lastSyncTime": {
+              "description": "LastSyncTime is the timestamp of the last successful sync",
+              "format": "date-time",
+              "type": "string"
+            },
+            "message": {
+              "description": "Message provides additional information about the sync status",
+              "type": "string"
+            },
+            "phase": {
+              "allOf": [
+                {
+                  "enum": [
+                    "Syncing",
+                    "Complete",
+                    "Failed"
+                  ]
+                },
+                {
+                  "enum": [
+                    "Syncing",
+                    "Complete",
+                    "Failed"
+                  ]
+                }
+              ],
+              "description": "Phase represents the current synchronization phase",
+              "type": "string"
+            },
+            "serverCount": {
+              "description": "ServerCount is the total number of servers in the registry",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "phase"
+          ],
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "x-kubernetes-validations": [
+    {
+      "message": "at least one registry must be specified",
+      "rule": "size(self.spec.registries) > 0"
+    }
+  ]
+}

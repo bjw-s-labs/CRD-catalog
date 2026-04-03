@@ -1,0 +1,100 @@
+{
+  "description": "MCPToolConfig is the Schema for the mcptoolconfigs API.\nMCPToolConfig resources are namespace-scoped and can only be referenced by\nMCPServer resources within the same namespace. Cross-namespace references\nare not supported for security and isolation reasons.",
+  "properties": {
+    "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+      "type": "string"
+    },
+    "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "spec": {
+      "description": "MCPToolConfigSpec defines the desired state of MCPToolConfig.\nMCPToolConfig resources are namespace-scoped and can only be referenced by\nMCPServer resources in the same namespace.",
+      "properties": {
+        "toolsFilter": {
+          "description": "ToolsFilter is a list of tool names to filter (allow list).\nOnly tools in this list will be exposed by the MCP server.\nIf empty, all tools are exposed.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "toolsOverride": {
+          "additionalProperties": {
+            "description": "ToolOverride represents a tool override configuration.\nBoth Name and Description can be overridden independently, but\nthey can't be both empty.",
+            "properties": {
+              "annotations": {
+                "description": "Annotations overrides specific tool annotation fields.\nOnly specified fields are overridden; others pass through from the backend.",
+                "properties": {
+                  "destructiveHint": {
+                    "description": "DestructiveHint overrides the destructive hint annotation.",
+                    "type": "boolean"
+                  },
+                  "idempotentHint": {
+                    "description": "IdempotentHint overrides the idempotent hint annotation.",
+                    "type": "boolean"
+                  },
+                  "openWorldHint": {
+                    "description": "OpenWorldHint overrides the open-world hint annotation.",
+                    "type": "boolean"
+                  },
+                  "readOnlyHint": {
+                    "description": "ReadOnlyHint overrides the read-only hint annotation.",
+                    "type": "boolean"
+                  },
+                  "title": {
+                    "description": "Title overrides the human-readable title annotation.",
+                    "type": "string"
+                  }
+                },
+                "type": "object",
+                "additionalProperties": false
+              },
+              "description": {
+                "description": "Description is the redefined description of the tool",
+                "type": "string"
+              },
+              "name": {
+                "description": "Name is the redefined name of the tool",
+                "type": "string"
+              }
+            },
+            "type": "object",
+            "additionalProperties": false
+          },
+          "description": "ToolsOverride is a map from actual tool names to their overridden configuration.\nThis allows renaming tools and/or changing their descriptions.",
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "additionalProperties": false
+    },
+    "status": {
+      "description": "MCPToolConfigStatus defines the observed state of MCPToolConfig",
+      "properties": {
+        "configHash": {
+          "description": "ConfigHash is a hash of the current configuration for change detection",
+          "type": "string"
+        },
+        "observedGeneration": {
+          "description": "ObservedGeneration is the most recent generation observed for this MCPToolConfig.\nIt corresponds to the MCPToolConfig's generation, which is updated on mutation by the API Server.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "referencingServers": {
+          "description": "ReferencingServers is a list of MCPServer resources that reference this MCPToolConfig\nThis helps track which servers need to be reconciled when this config changes",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "additionalProperties": false
+    }
+  },
+  "type": "object"
+}
