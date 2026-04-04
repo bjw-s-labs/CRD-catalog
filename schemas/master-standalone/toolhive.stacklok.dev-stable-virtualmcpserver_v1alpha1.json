@@ -1089,6 +1089,10 @@
                       },
                       "type": "array"
                     },
+                    "primaryUpstreamProvider": {
+                      "description": "PrimaryUpstreamProvider names the upstream IDP provider whose access\ntoken should be used as the source of JWT claims for Cedar evaluation.\nWhen empty, claims from the ToolHive-issued token are used.\nMust match an upstream provider name configured in the embedded auth server\n(e.g. \"default\", \"github\"). Only relevant when the embedded auth server is active.",
+                      "type": "string"
+                    },
                     "type": {
                       "description": "Type is the authz type: \"cedar\", \"none\"",
                       "type": "string"
@@ -1119,6 +1123,10 @@
                       "description": "InsecureAllowHTTP allows HTTP (non-HTTPS) OIDC issuers for development/testing\nWARNING: This is insecure and should NEVER be used in production",
                       "type": "boolean"
                     },
+                    "introspectionUrl": {
+                      "description": "IntrospectionURL is the token introspection endpoint URL (RFC 7662).\nWhen set, enables token introspection for opaque (non-JWT) tokens.",
+                      "type": "string"
+                    },
                     "issuer": {
                       "description": "Issuer is the OIDC issuer URL.",
                       "pattern": "^https?://",
@@ -1127,6 +1135,10 @@
                     "jwksAllowPrivateIp": {
                       "description": "JwksAllowPrivateIP allows OIDC discovery and JWKS fetches to private IP addresses.\nEnable when the embedded auth server runs on a loopback address and\nthe OIDC middleware needs to fetch its JWKS from that address.\nUse with caution - only enable for trusted internal IDPs or testing.",
                       "type": "boolean"
+                    },
+                    "jwksUrl": {
+                      "description": "JWKSURL is the explicit JWKS endpoint URL.\nWhen set, skips OIDC discovery and fetches the JWKS directly from this URL.\nThis is useful when the OIDC issuer does not serve a /.well-known/openid-configuration.",
+                      "type": "string"
                     },
                     "protectedResourceAllowPrivateIp": {
                       "description": "ProtectedResourceAllowPrivateIP allows protected resource endpoint on private IP addresses\nUse with caution - only enable for trusted internal IDPs or testing",
@@ -1719,7 +1731,7 @@
               "additionalProperties": false
             },
             "oidcConfig": {
-              "description": "OIDCConfig defines OIDC authentication configuration\nReuses MCPServer OIDC patterns",
+              "description": "OIDCConfig defines OIDC authentication configuration.\nDeprecated: Use OIDCConfigRef to reference a shared MCPOIDCConfig resource instead.\nThis field will be removed in v1beta1. OIDCConfig and OIDCConfigRef are mutually exclusive.",
               "properties": {
                 "configMap": {
                   "description": "ConfigMap references a ConfigMap containing OIDC configuration\nOnly used when Type is \"configmap\"",
@@ -1779,7 +1791,7 @@
                       "type": "string"
                     },
                     "caBundleRef": {
-                      "description": "CABundleRef references a ConfigMap containing the CA certificate bundle.\nWhen specified, ToolHive auto-mounts the ConfigMap and auto-computes ThvCABundlePath.\nIf ThvCABundlePath is explicitly set, it takes precedence over CABundleRef.",
+                      "description": "CABundleRef references a ConfigMap containing the CA certificate bundle.\nWhen specified, ToolHive auto-mounts the ConfigMap and auto-computes the CA bundle path.",
                       "properties": {
                         "configMapRef": {
                           "description": "ConfigMapRef references a ConfigMap containing the CA certificate bundle.\nIf Key is not specified, it defaults to \"ca.crt\".",
@@ -1813,12 +1825,8 @@
                       "description": "ClientID is the OIDC client ID",
                       "type": "string"
                     },
-                    "clientSecret": {
-                      "description": "ClientSecret is the client secret for introspection (optional)\nDeprecated: Use ClientSecretRef instead for better security",
-                      "type": "string"
-                    },
                     "clientSecretRef": {
-                      "description": "ClientSecretRef is a reference to a Kubernetes Secret containing the client secret\nIf both ClientSecret and ClientSecretRef are provided, ClientSecretRef takes precedence",
+                      "description": "ClientSecretRef is a reference to a Kubernetes Secret containing the client secret",
                       "properties": {
                         "key": {
                           "description": "Key is the key within the secret",
@@ -1873,10 +1881,6 @@
                         "type": "string"
                       },
                       "type": "array"
-                    },
-                    "thvCABundlePath": {
-                      "description": "ThvCABundlePath is the path to CA certificate bundle file for HTTPS requests.\n\nDeprecated: Use CABundleRef instead. ThvCABundlePath requires the CA bundle to\nalready exist in the proxy runner container (e.g., Kubernetes service account CA at\n/var/run/secrets/kubernetes.io/serviceaccount/ca.crt). For custom CA certificates,\nuse CABundleRef which automatically mounts the ConfigMap and computes the path.\nThis field will be removed when the API graduates to v1beta1.",
-                      "type": "string"
                     }
                   },
                   "required": [
@@ -1957,6 +1961,34 @@
               ],
               "additionalProperties": false
             },
+            "oidcConfigRef": {
+              "description": "OIDCConfigRef references a shared MCPOIDCConfig resource for OIDC authentication.\nThe referenced MCPOIDCConfig must exist in the same namespace as this VirtualMCPServer.\nPer-server overrides (audience, scopes) are specified here; shared provider config\nlives in the MCPOIDCConfig resource. Mutually exclusive with oidcConfig.",
+              "properties": {
+                "audience": {
+                  "description": "Audience is the expected audience for token validation.\nThis MUST be unique per server to prevent token replay attacks.",
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "name": {
+                  "description": "Name is the name of the MCPOIDCConfig resource",
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "scopes": {
+                  "description": "Scopes is the list of OAuth scopes to advertise in the well-known endpoint (RFC 9728).\nIf empty, defaults to [\"openid\"].",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "audience",
+                "name"
+              ],
+              "type": "object",
+              "additionalProperties": false
+            },
             "type": {
               "description": "Type defines the authentication type: anonymous or oidc\nWhen no authentication is required, explicitly set this to \"anonymous\"",
               "enum": [
@@ -1972,8 +2004,12 @@
           "type": "object",
           "x-kubernetes-validations": [
             {
-              "message": "spec.incomingAuth.oidcConfig is required when type is oidc",
-              "rule": "self.type == 'oidc' ? has(self.oidcConfig) : true"
+              "message": "spec.incomingAuth.oidcConfig or oidcConfigRef is required when type is oidc",
+              "rule": "self.type == 'oidc' ? (has(self.oidcConfig) || has(self.oidcConfigRef)) : true"
+            },
+            {
+              "message": "oidcConfig and oidcConfigRef are mutually exclusive; use oidcConfigRef to reference a shared MCPOIDCConfig",
+              "rule": "!(has(self.oidcConfig) && has(self.oidcConfigRef))"
             }
           ],
           "additionalProperties": false
@@ -2294,6 +2330,10 @@
           "description": "ObservedGeneration is the most recent generation observed for this VirtualMCPServer",
           "format": "int64",
           "type": "integer"
+        },
+        "oidcConfigHash": {
+          "description": "OIDCConfigHash is the hash of the referenced MCPOIDCConfig spec for change detection.\nOnly populated when IncomingAuth.OIDCConfigRef is set.",
+          "type": "string"
         },
         "phase": {
           "default": "Pending",

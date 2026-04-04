@@ -235,7 +235,7 @@
                   "type": "string"
                 },
                 "caBundleRef": {
-                  "description": "CABundleRef references a ConfigMap containing the CA certificate bundle.\nWhen specified, ToolHive auto-mounts the ConfigMap and auto-computes ThvCABundlePath.\nIf ThvCABundlePath is explicitly set, it takes precedence over CABundleRef.",
+                  "description": "CABundleRef references a ConfigMap containing the CA certificate bundle.\nWhen specified, ToolHive auto-mounts the ConfigMap and auto-computes the CA bundle path.",
                   "properties": {
                     "configMapRef": {
                       "description": "ConfigMapRef references a ConfigMap containing the CA certificate bundle.\nIf Key is not specified, it defaults to \"ca.crt\".",
@@ -269,12 +269,8 @@
                   "description": "ClientID is the OIDC client ID",
                   "type": "string"
                 },
-                "clientSecret": {
-                  "description": "ClientSecret is the client secret for introspection (optional)\nDeprecated: Use ClientSecretRef instead for better security",
-                  "type": "string"
-                },
                 "clientSecretRef": {
-                  "description": "ClientSecretRef is a reference to a Kubernetes Secret containing the client secret\nIf both ClientSecret and ClientSecretRef are provided, ClientSecretRef takes precedence",
+                  "description": "ClientSecretRef is a reference to a Kubernetes Secret containing the client secret",
                   "properties": {
                     "key": {
                       "description": "Key is the key within the secret",
@@ -329,10 +325,6 @@
                     "type": "string"
                   },
                   "type": "array"
-                },
-                "thvCABundlePath": {
-                  "description": "ThvCABundlePath is the path to CA certificate bundle file for HTTPS requests.\n\nDeprecated: Use CABundleRef instead. ThvCABundlePath requires the CA bundle to\nalready exist in the proxy runner container (e.g., Kubernetes service account CA at\n/var/run/secrets/kubernetes.io/serviceaccount/ca.crt). For custom CA certificates,\nuse CABundleRef which automatically mounts the ConfigMap and computes the path.\nThis field will be removed when the API graduates to v1beta1.",
-                  "type": "string"
                 }
               },
               "required": [
@@ -412,14 +404,6 @@
             }
           ],
           "additionalProperties": false
-        },
-        "port": {
-          "default": 8080,
-          "description": "Port is the port to expose the MCP proxy on\nDeprecated: Use ProxyPort instead",
-          "format": "int32",
-          "maximum": 65535,
-          "minimum": 1,
-          "type": "integer"
         },
         "proxyPort": {
           "default": 8080,

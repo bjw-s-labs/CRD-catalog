@@ -168,7 +168,7 @@
           "type": "integer"
         },
         "oidcConfig": {
-          "description": "OIDCConfig defines OIDC authentication configuration for the MCP server",
+          "description": "OIDCConfig defines OIDC authentication configuration for the MCP server.\nDeprecated: Use OIDCConfigRef to reference a shared MCPOIDCConfig resource instead.\nThis field will be removed in v1beta1. OIDCConfig and OIDCConfigRef are mutually exclusive.",
           "properties": {
             "configMap": {
               "description": "ConfigMap references a ConfigMap containing OIDC configuration\nOnly used when Type is \"configmap\"",
@@ -228,7 +228,7 @@
                   "type": "string"
                 },
                 "caBundleRef": {
-                  "description": "CABundleRef references a ConfigMap containing the CA certificate bundle.\nWhen specified, ToolHive auto-mounts the ConfigMap and auto-computes ThvCABundlePath.\nIf ThvCABundlePath is explicitly set, it takes precedence over CABundleRef.",
+                  "description": "CABundleRef references a ConfigMap containing the CA certificate bundle.\nWhen specified, ToolHive auto-mounts the ConfigMap and auto-computes the CA bundle path.",
                   "properties": {
                     "configMapRef": {
                       "description": "ConfigMapRef references a ConfigMap containing the CA certificate bundle.\nIf Key is not specified, it defaults to \"ca.crt\".",
@@ -262,12 +262,8 @@
                   "description": "ClientID is the OIDC client ID",
                   "type": "string"
                 },
-                "clientSecret": {
-                  "description": "ClientSecret is the client secret for introspection (optional)\nDeprecated: Use ClientSecretRef instead for better security",
-                  "type": "string"
-                },
                 "clientSecretRef": {
-                  "description": "ClientSecretRef is a reference to a Kubernetes Secret containing the client secret\nIf both ClientSecret and ClientSecretRef are provided, ClientSecretRef takes precedence",
+                  "description": "ClientSecretRef is a reference to a Kubernetes Secret containing the client secret",
                   "properties": {
                     "key": {
                       "description": "Key is the key within the secret",
@@ -322,10 +318,6 @@
                     "type": "string"
                   },
                   "type": "array"
-                },
-                "thvCABundlePath": {
-                  "description": "ThvCABundlePath is the path to CA certificate bundle file for HTTPS requests.\n\nDeprecated: Use CABundleRef instead. ThvCABundlePath requires the CA bundle to\nalready exist in the proxy runner container (e.g., Kubernetes service account CA at\n/var/run/secrets/kubernetes.io/serviceaccount/ca.crt). For custom CA certificates,\nuse CABundleRef which automatically mounts the ConfigMap and computes the path.\nThis field will be removed when the API graduates to v1beta1.",
-                  "type": "string"
                 }
               },
               "required": [
@@ -406,6 +398,34 @@
           ],
           "additionalProperties": false
         },
+        "oidcConfigRef": {
+          "description": "OIDCConfigRef references a shared MCPOIDCConfig resource for OIDC authentication.\nThe referenced MCPOIDCConfig must exist in the same namespace as this MCPServer.\nPer-server overrides (audience, scopes) are specified here; shared provider config\nlives in the MCPOIDCConfig resource. Mutually exclusive with oidcConfig.",
+          "properties": {
+            "audience": {
+              "description": "Audience is the expected audience for token validation.\nThis MUST be unique per server to prevent token replay attacks.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "name": {
+              "description": "Name is the name of the MCPOIDCConfig resource",
+              "minLength": 1,
+              "type": "string"
+            },
+            "scopes": {
+              "description": "Scopes is the list of OAuth scopes to advertise in the well-known endpoint (RFC 9728).\nIf empty, defaults to [\"openid\"].",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "audience",
+            "name"
+          ],
+          "type": "object",
+          "additionalProperties": false
+        },
         "permissionProfile": {
           "description": "PermissionProfile defines the permission profile to use",
           "properties": {
@@ -438,14 +458,6 @@
           "description": "PodTemplateSpec defines the pod template to use for the MCP server\nThis allows for customizing the pod configuration beyond what is provided by the other fields.\nNote that to modify the specific container the MCP server runs in, you must specify\nthe `mcp` container name in the PodTemplateSpec.\nThis field accepts a PodTemplateSpec object as JSON/YAML.",
           "type": "object",
           "x-kubernetes-preserve-unknown-fields": true
-        },
-        "port": {
-          "default": 8080,
-          "description": "Port is the port to expose the MCP server on\nDeprecated: Use ProxyPort instead",
-          "format": "int32",
-          "maximum": 65535,
-          "minimum": 1,
-          "type": "integer"
         },
         "proxyMode": {
           "default": "streamable-http",
@@ -716,15 +728,8 @@
           ],
           "additionalProperties": false
         },
-        "targetPort": {
-          "description": "TargetPort is the port that MCP server listens to\nDeprecated: Use McpPort instead",
-          "format": "int32",
-          "maximum": 65535,
-          "minimum": 1,
-          "type": "integer"
-        },
         "telemetry": {
-          "description": "Telemetry defines observability configuration for the MCP server",
+          "description": "Telemetry defines inline observability configuration for the MCP server.\nDeprecated: Use TelemetryConfigRef to reference a shared MCPTelemetryConfig resource instead.\nThis field will be removed in a future release. Setting both telemetry and telemetryConfigRef\nis rejected by CEL validation.",
           "properties": {
             "openTelemetry": {
               "description": "OpenTelemetry defines OpenTelemetry configuration",
@@ -808,8 +813,27 @@
           "type": "object",
           "additionalProperties": false
         },
+        "telemetryConfigRef": {
+          "description": "TelemetryConfigRef references an MCPTelemetryConfig resource for shared telemetry configuration.\nThe referenced MCPTelemetryConfig must exist in the same namespace as this MCPServer.\nCross-namespace references are not supported for security and isolation reasons.\nMutually exclusive with the deprecated inline Telemetry field.",
+          "properties": {
+            "name": {
+              "description": "Name is the name of the MCPTelemetryConfig resource",
+              "minLength": 1,
+              "type": "string"
+            },
+            "serviceName": {
+              "description": "ServiceName overrides the telemetry service name for this specific server.\nThis MUST be unique per server for proper observability (e.g., distinguishing\ntraces and metrics from different servers sharing the same collector).\nIf empty, defaults to the server name with \"thv-\" prefix at runtime.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object",
+          "additionalProperties": false
+        },
         "toolConfigRef": {
-          "description": "ToolConfigRef references a MCPToolConfig resource for tool filtering and renaming.\nThe referenced MCPToolConfig must exist in the same namespace as this MCPServer.\nCross-namespace references are not supported for security and isolation reasons.\nIf specified, this takes precedence over the inline ToolsFilter field.",
+          "description": "ToolConfigRef references a MCPToolConfig resource for tool filtering and renaming.\nThe referenced MCPToolConfig must exist in the same namespace as this MCPServer.\nCross-namespace references are not supported for security and isolation reasons.",
           "properties": {
             "name": {
               "description": "Name is the name of the MCPToolConfig resource in the same namespace",
@@ -821,13 +845,6 @@
           ],
           "type": "object",
           "additionalProperties": false
-        },
-        "tools": {
-          "description": "ToolsFilter is the filter on tools applied to the MCP server\nDeprecated: Use ToolConfigRef instead",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
         },
         "transport": {
           "default": "stdio",
@@ -882,6 +899,16 @@
         "image"
       ],
       "type": "object",
+      "x-kubernetes-validations": [
+        {
+          "message": "oidcConfig and oidcConfigRef are mutually exclusive; use oidcConfigRef to reference a shared MCPOIDCConfig",
+          "rule": "!(has(self.oidcConfig) && has(self.oidcConfigRef))"
+        },
+        {
+          "message": "telemetry and telemetryConfigRef are mutually exclusive; migrate to telemetryConfigRef",
+          "rule": "!(has(self.telemetry) && has(self.telemetryConfigRef))"
+        }
+      ],
       "additionalProperties": false
     },
     "status": {
@@ -951,6 +978,15 @@
           "description": "Message provides additional information about the current phase",
           "type": "string"
         },
+        "observedGeneration": {
+          "description": "ObservedGeneration reflects the generation most recently observed by the controller",
+          "format": "int64",
+          "type": "integer"
+        },
+        "oidcConfigHash": {
+          "description": "OIDCConfigHash is the hash of the referenced MCPOIDCConfig spec for change detection",
+          "type": "string"
+        },
         "phase": {
           "description": "Phase is the current phase of the MCPServer",
           "enum": [
@@ -966,6 +1002,10 @@
           "description": "ReadyReplicas is the number of ready proxy replicas",
           "format": "int32",
           "type": "integer"
+        },
+        "telemetryConfigHash": {
+          "description": "TelemetryConfigHash is the hash of the referenced MCPTelemetryConfig spec for change detection",
+          "type": "string"
         },
         "toolConfigHash": {
           "description": "ToolConfigHash stores the hash of the referenced ToolConfig for change detection",
