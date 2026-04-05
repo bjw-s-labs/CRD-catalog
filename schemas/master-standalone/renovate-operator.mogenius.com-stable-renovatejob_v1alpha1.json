@@ -3336,6 +3336,46 @@
                 "format": "date-time",
                 "type": "string"
               },
+              "logIssues": {
+                "description": "LogIssues contains aggregate counts and individual issue messages from a Renovate run.",
+                "properties": {
+                  "errorCount": {
+                    "type": "integer"
+                  },
+                  "issues": {
+                    "items": {
+                      "description": "LogIssue represents a single warning or error from Renovate logs.",
+                      "properties": {
+                        "level": {
+                          "type": "integer"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "level",
+                        "message"
+                      ],
+                      "type": "object",
+                      "additionalProperties": false
+                    },
+                    "type": "array"
+                  },
+                  "truncated": {
+                    "type": "boolean"
+                  },
+                  "warnCount": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "errorCount",
+                  "warnCount"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              },
               "name": {
                 "type": "string"
               },
@@ -3363,9 +3403,6 @@
                           "type": "integer"
                         },
                         "title": {
-                          "type": "string"
-                        },
-                        "url": {
                           "type": "string"
                         }
                       },
