@@ -160,7 +160,11 @@
                     "additionalProperties": false
                   },
                   "minItems": 1,
-                  "type": "array"
+                  "type": "array",
+                  "x-kubernetes-list-map-keys": [
+                    "name"
+                  ],
+                  "x-kubernetes-list-type": "map"
                 },
                 "realm": {
                   "description": "Realm is the protection space identifier for WWW-Authenticate header (RFC 7235)\nDefaults to \"mcp-registry\" if not specified",
@@ -175,7 +179,8 @@
                   "items": {
                     "type": "string"
                   },
-                  "type": "array"
+                  "type": "array",
+                  "x-kubernetes-list-type": "atomic"
                 }
               },
               "type": "object",
@@ -255,12 +260,14 @@
             "maxIdleConns": {
               "default": 2,
               "description": "MaxIdleConns is the maximum number of idle connections in the pool",
+              "format": "int32",
               "minimum": 0,
               "type": "integer"
             },
             "maxOpenConns": {
               "default": 10,
               "description": "MaxOpenConns is the maximum number of open connections to the database",
+              "format": "int32",
               "minimum": 1,
               "type": "integer"
             },
@@ -272,6 +279,7 @@
             "port": {
               "default": 5432,
               "description": "Port is the database server port",
+              "format": "int32",
               "maximum": 65535,
               "minimum": 1,
               "type": "integer"
@@ -372,14 +380,16 @@
                         "items": {
                           "type": "string"
                         },
-                        "type": "array"
+                        "type": "array",
+                        "x-kubernetes-list-type": "atomic"
                       },
                       "include": {
                         "description": "Include is a list of glob patterns to include",
                         "items": {
                           "type": "string"
                         },
-                        "type": "array"
+                        "type": "array",
+                        "x-kubernetes-list-type": "atomic"
                       }
                     },
                     "type": "object",
@@ -393,14 +403,16 @@
                         "items": {
                           "type": "string"
                         },
-                        "type": "array"
+                        "type": "array",
+                        "x-kubernetes-list-type": "atomic"
                       },
                       "include": {
                         "description": "Include is a list of tags to include",
                         "items": {
                           "type": "string"
                         },
-                        "type": "array"
+                        "type": "array",
+                        "x-kubernetes-list-type": "atomic"
                       }
                     },
                     "type": "object",
@@ -545,7 +557,11 @@
             "additionalProperties": false
           },
           "minItems": 1,
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "name"
+          ],
+          "x-kubernetes-list-type": "map"
         }
       },
       "required": [
@@ -727,6 +743,7 @@
           "properties": {
             "attemptCount": {
               "description": "AttemptCount is the number of sync attempts since last success",
+              "format": "int32",
               "minimum": 0,
               "type": "integer"
             },
@@ -770,6 +787,7 @@
             },
             "serverCount": {
               "description": "ServerCount is the total number of servers in the registry",
+              "format": "int32",
               "minimum": 0,
               "type": "integer"
             }

@@ -44,7 +44,8 @@
                 "type": "object",
                 "additionalProperties": false
               },
-              "type": "array"
+              "type": "array",
+              "x-kubernetes-list-type": "atomic"
             },
             "issuer": {
               "description": "Issuer is the issuer identifier for this authorization server.\nThis will be included in the \"iss\" claim of issued tokens.\nMust be a valid HTTPS URL (or HTTP for localhost) without query, fragment, or trailing slash (per RFC 8414).",
@@ -73,7 +74,8 @@
                 "additionalProperties": false
               },
               "maxItems": 5,
-              "type": "array"
+              "type": "array",
+              "x-kubernetes-list-type": "atomic"
             },
             "storage": {
               "description": "Storage configures the storage backend for the embedded auth server.\nIf not specified, defaults to in-memory storage.",
@@ -160,7 +162,8 @@
                           "items": {
                             "type": "string"
                           },
-                          "type": "array"
+                          "type": "array",
+                          "x-kubernetes-list-type": "atomic"
                         },
                         "sentinelService": {
                           "description": "SentinelService enables automatic discovery from a Kubernetes Service.\nMutually exclusive with SentinelAddrs.",
@@ -354,7 +357,8 @@
                         "items": {
                           "type": "string"
                         },
-                        "type": "array"
+                        "type": "array",
+                        "x-kubernetes-list-type": "atomic"
                       },
                       "tokenEndpoint": {
                         "description": "TokenEndpoint is the URL for the OAuth token endpoint.",
@@ -411,21 +415,24 @@
                                 "items": {
                                   "type": "string"
                                 },
-                                "type": "array"
+                                "type": "array",
+                                "x-kubernetes-list-type": "atomic"
                               },
                               "nameFields": {
                                 "description": "NameFields is an ordered list of field names to try for the display name.\nThe first non-empty value found will be used.\nDefault: [\"name\"]",
                                 "items": {
                                   "type": "string"
                                 },
-                                "type": "array"
+                                "type": "array",
+                                "x-kubernetes-list-type": "atomic"
                               },
                               "subjectFields": {
                                 "description": "SubjectFields is an ordered list of field names to try for the user ID.\nThe first non-empty value found will be used.\nDefault: [\"sub\"]",
                                 "items": {
                                   "type": "string"
                                 },
-                                "type": "array"
+                                "type": "array",
+                                "x-kubernetes-list-type": "atomic"
                               }
                             },
                             "type": "object",
@@ -496,7 +503,8 @@
                         "items": {
                           "type": "string"
                         },
-                        "type": "array"
+                        "type": "array",
+                        "x-kubernetes-list-type": "atomic"
                       },
                       "userInfoOverride": {
                         "description": "UserInfoOverride allows customizing UserInfo fetching behavior for OIDC providers.\nBy default, the UserInfo endpoint is discovered automatically via OIDC discovery.\nUse this to override the endpoint URL, HTTP method, or field mappings for providers\nthat return non-standard claim names in their UserInfo response.",
@@ -521,21 +529,24 @@
                                 "items": {
                                   "type": "string"
                                 },
-                                "type": "array"
+                                "type": "array",
+                                "x-kubernetes-list-type": "atomic"
                               },
                               "nameFields": {
                                 "description": "NameFields is an ordered list of field names to try for the display name.\nThe first non-empty value found will be used.\nDefault: [\"name\"]",
                                 "items": {
                                   "type": "string"
                                 },
-                                "type": "array"
+                                "type": "array",
+                                "x-kubernetes-list-type": "atomic"
                               },
                               "subjectFields": {
                                 "description": "SubjectFields is an ordered list of field names to try for the user ID.\nThe first non-empty value found will be used.\nDefault: [\"sub\"]",
                                 "items": {
                                   "type": "string"
                                 },
-                                "type": "array"
+                                "type": "array",
+                                "x-kubernetes-list-type": "atomic"
                               }
                             },
                             "type": "object",
@@ -581,7 +592,11 @@
                 "additionalProperties": false
               },
               "minItems": 1,
-              "type": "array"
+              "type": "array",
+              "x-kubernetes-list-map-keys": [
+                "name"
+              ],
+              "x-kubernetes-list-type": "map"
             }
           },
           "required": [
@@ -1379,7 +1394,7 @@
                             "type": "array"
                           },
                           "subjectProviderName": {
-                            "description": "SubjectProviderName selects which upstream provider's token to use as the\nsubject token. When set, the token is looked up from Identity.UpstreamTokens\ninstead of using Identity.Token.",
+                            "description": "SubjectProviderName selects which upstream provider's token to use as the\nsubject token. When set, the token is looked up from Identity.UpstreamTokens\ninstead of using Identity.Token.\nWhen left empty and an embedded authorization server is configured, the system\nautomatically populates this field with the first configured upstream provider name.\nSet it explicitly to override that default or to select a specific provider when\nmultiple upstreams are configured.",
                             "type": "string"
                           },
                           "subjectTokenType": {
@@ -1477,7 +1492,7 @@
                           "type": "array"
                         },
                         "subjectProviderName": {
-                          "description": "SubjectProviderName selects which upstream provider's token to use as the\nsubject token. When set, the token is looked up from Identity.UpstreamTokens\ninstead of using Identity.Token.",
+                          "description": "SubjectProviderName selects which upstream provider's token to use as the\nsubject token. When set, the token is looked up from Identity.UpstreamTokens\ninstead of using Identity.Token.\nWhen left empty and an embedded authorization server is configured, the system\nautomatically populates this field with the first configured upstream provider name.\nSet it explicitly to override that default or to select a specific provider when\nmultiple upstreams are configured.",
                           "type": "string"
                         },
                         "subjectTokenType": {
@@ -1695,7 +1710,8 @@
                         "type": "string"
                       },
                       "minItems": 1,
-                      "type": "array"
+                      "type": "array",
+                      "x-kubernetes-list-type": "atomic"
                     }
                   },
                   "required": [
@@ -1880,7 +1896,8 @@
                       "items": {
                         "type": "string"
                       },
-                      "type": "array"
+                      "type": "array",
+                      "x-kubernetes-list-type": "atomic"
                     }
                   },
                   "required": [
@@ -1979,7 +1996,8 @@
                   "items": {
                     "type": "string"
                   },
-                  "type": "array"
+                  "type": "array",
+                  "x-kubernetes-list-type": "atomic"
                 }
               },
               "required": [
@@ -2203,6 +2221,7 @@
       "properties": {
         "backendCount": {
           "description": "BackendCount is the number of healthy/ready backends\n(excludes unavailable, degraded, and unknown backends)",
+          "format": "int32",
           "type": "integer"
         },
         "conditions": {
@@ -2259,7 +2278,11 @@
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "type"
+          ],
+          "x-kubernetes-list-type": "map"
         },
         "discoveredBackends": {
           "description": "DiscoveredBackends lists discovered backend configurations from the MCPGroup",
@@ -2320,7 +2343,11 @@
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "name"
+          ],
+          "x-kubernetes-list-type": "map"
         },
         "message": {
           "description": "Message provides additional information about the current phase",

@@ -20,7 +20,8 @@
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-type": "atomic"
         },
         "audit": {
           "description": "Audit defines audit logging configuration for the MCP server",
@@ -70,7 +71,8 @@
                     "type": "string"
                   },
                   "minItems": 1,
-                  "type": "array"
+                  "type": "array",
+                  "x-kubernetes-list-type": "atomic"
                 }
               },
               "required": [
@@ -136,7 +138,11 @@
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "name"
+          ],
+          "x-kubernetes-list-type": "map"
         },
         "externalAuthConfigRef": {
           "description": "ExternalAuthConfigRef references a MCPExternalAuthConfig resource for external authentication.\nThe referenced MCPExternalAuthConfig must exist in the same namespace as this MCPServer.",
@@ -317,7 +323,8 @@
                   "items": {
                     "type": "string"
                   },
-                  "type": "array"
+                  "type": "array",
+                  "x-kubernetes-list-type": "atomic"
                 }
               },
               "required": [
@@ -416,7 +423,8 @@
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": "array",
+              "x-kubernetes-list-type": "atomic"
             }
           },
           "required": [
@@ -476,6 +484,85 @@
           "minimum": 1,
           "type": "integer"
         },
+        "rateLimiting": {
+          "description": "RateLimiting defines rate limiting configuration for the MCP server.\nRequires Redis session storage to be configured for distributed rate limiting.",
+          "properties": {
+            "shared": {
+              "description": "Shared defines a token bucket shared across all users for the entire server.",
+              "properties": {
+                "maxTokens": {
+                  "description": "MaxTokens is the maximum number of tokens (bucket capacity).\nThis is also the burst size: the maximum number of requests that can be served\ninstantaneously before the bucket is depleted.",
+                  "format": "int32",
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "refillPeriod": {
+                  "description": "RefillPeriod is the duration to fully refill the bucket from zero to maxTokens.\nThe effective refill rate is maxTokens / refillPeriod tokens per second.\nFormat: Go duration string (e.g., \"1m0s\", \"30s\", \"1h0m0s\").",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "maxTokens",
+                "refillPeriod"
+              ],
+              "type": "object",
+              "additionalProperties": false
+            },
+            "tools": {
+              "description": "Tools defines per-tool rate limit overrides.\nEach entry applies additional rate limits to calls targeting a specific tool name.\nA request must pass both the server-level limit and the per-tool limit.",
+              "items": {
+                "description": "ToolRateLimitConfig defines rate limits for a specific tool.",
+                "properties": {
+                  "name": {
+                    "description": "Name is the MCP tool name this limit applies to.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "shared": {
+                    "description": "Shared defines a token bucket shared across all users for this specific tool.",
+                    "properties": {
+                      "maxTokens": {
+                        "description": "MaxTokens is the maximum number of tokens (bucket capacity).\nThis is also the burst size: the maximum number of requests that can be served\ninstantaneously before the bucket is depleted.",
+                        "format": "int32",
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "refillPeriod": {
+                        "description": "RefillPeriod is the duration to fully refill the bucket from zero to maxTokens.\nThe effective refill rate is maxTokens / refillPeriod tokens per second.\nFormat: Go duration string (e.g., \"1m0s\", \"30s\", \"1h0m0s\").",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "maxTokens",
+                      "refillPeriod"
+                    ],
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "name",
+                  "shared"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              },
+              "type": "array",
+              "x-kubernetes-list-map-keys": [
+                "name"
+              ],
+              "x-kubernetes-list-type": "map"
+            }
+          },
+          "type": "object",
+          "x-kubernetes-validations": [
+            {
+              "message": "at least one of shared or tools must be configured",
+              "rule": "has(self.shared) || (has(self.tools) && size(self.tools) > 0)"
+            }
+          ],
+          "additionalProperties": false
+        },
         "replicas": {
           "description": "Replicas is the desired number of proxy runner (thv run) pod replicas.\nMCPServer creates two separate Deployments: one for the proxy runner and one\nfor the MCP server backend. This field controls the proxy runner Deployment.\nWhen nil, the operator does not set Deployment.Spec.Replicas, leaving replica\nmanagement to an HPA or other external controller.",
           "format": "int32",
@@ -516,7 +603,11 @@
                     "type": "object",
                     "additionalProperties": false
                   },
-                  "type": "array"
+                  "type": "array",
+                  "x-kubernetes-list-map-keys": [
+                    "name"
+                  ],
+                  "x-kubernetes-list-type": "map"
                 },
                 "imagePullSecrets": {
                   "description": "ImagePullSecrets allows specifying image pull secrets for the proxy runner\nThese are applied to both the Deployment and the ServiceAccount",
@@ -533,7 +624,8 @@
                     "x-kubernetes-map-type": "atomic",
                     "additionalProperties": false
                   },
-                  "type": "array"
+                  "type": "array",
+                  "x-kubernetes-list-type": "atomic"
                 },
                 "labels": {
                   "additionalProperties": {
@@ -654,7 +746,11 @@
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "name"
+          ],
+          "x-kubernetes-list-type": "map"
         },
         "serviceAccount": {
           "description": "ServiceAccount is the name of an already existing service account to use by the MCP server.\nIf not specified, a ServiceAccount will be created automatically and used by the MCP server.",
@@ -748,7 +844,8 @@
                   "items": {
                     "type": "string"
                   },
-                  "type": "array"
+                  "type": "array",
+                  "x-kubernetes-list-type": "atomic"
                 },
                 "insecure": {
                   "default": false,
@@ -782,6 +879,7 @@
                     "samplingRate": {
                       "default": "0.05",
                       "description": "SamplingRate is the trace sampling rate (0.0-1.0)",
+                      "pattern": "^(0(\\.\\d+)?|1(\\.0+)?)$",
                       "type": "string"
                     }
                   },
@@ -892,7 +990,11 @@
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "name"
+          ],
+          "x-kubernetes-list-type": "map"
         }
       },
       "required": [
@@ -907,6 +1009,10 @@
         {
           "message": "telemetry and telemetryConfigRef are mutually exclusive; migrate to telemetryConfigRef",
           "rule": "!(has(self.telemetry) && has(self.telemetryConfigRef))"
+        },
+        {
+          "message": "rateLimiting requires sessionStorage with provider 'redis'",
+          "rule": "!has(self.rateLimiting) || (has(self.sessionStorage) && self.sessionStorage.provider == 'redis')"
         }
       ],
       "additionalProperties": false
@@ -968,7 +1074,11 @@
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "type"
+          ],
+          "x-kubernetes-list-type": "map"
         },
         "externalAuthConfigHash": {
           "description": "ExternalAuthConfigHash is the hash of the referenced MCPExternalAuthConfig spec",

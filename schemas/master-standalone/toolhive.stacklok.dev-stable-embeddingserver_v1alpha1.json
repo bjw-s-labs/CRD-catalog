@@ -20,7 +20,8 @@
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-type": "atomic"
         },
         "env": {
           "description": "Env are environment variables to set in the container",
@@ -43,7 +44,11 @@
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "name"
+          ],
+          "x-kubernetes-list-type": "map"
         },
         "hfTokenSecretRef": {
           "description": "HFTokenSecretRef is a reference to a Kubernetes Secret containing the huggingface token.\nIf provided, the secret value will be provided to the embedding server for authentication with huggingface.",
@@ -324,7 +329,11 @@
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "type"
+          ],
+          "x-kubernetes-list-type": "map"
         },
         "message": {
           "description": "Message provides additional information about the current phase",

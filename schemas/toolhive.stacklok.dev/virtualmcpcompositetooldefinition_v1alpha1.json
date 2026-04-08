@@ -307,7 +307,11 @@
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "type"
+          ],
+          "x-kubernetes-list-type": "map"
         },
         "observedGeneration": {
           "description": "ObservedGeneration is the most recent generation observed for this VirtualMCPCompositeToolDefinition\nIt corresponds to the resource's generation, which is updated on mutation by the API Server",
@@ -319,14 +323,16 @@
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-type": "set"
         },
         "validationErrors": {
           "description": "ValidationErrors contains validation error messages if ValidationStatus is Invalid",
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-type": "atomic"
         },
         "validationStatus": {
           "description": "ValidationStatus indicates the validation state of the workflow\n- Valid: Workflow structure is valid\n- Invalid: Workflow has validation errors",

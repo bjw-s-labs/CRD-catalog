@@ -63,7 +63,8 @@
                     "type": "string"
                   },
                   "minItems": 1,
-                  "type": "array"
+                  "type": "array",
+                  "x-kubernetes-list-type": "atomic"
                 }
               },
               "required": [
@@ -161,7 +162,11 @@
                 "type": "object",
                 "additionalProperties": false
               },
-              "type": "array"
+              "type": "array",
+              "x-kubernetes-list-map-keys": [
+                "headerName"
+              ],
+              "x-kubernetes-list-type": "map"
             },
             "addPlaintextHeaders": {
               "additionalProperties": {
@@ -175,7 +180,7 @@
           "additionalProperties": false
         },
         "oidcConfig": {
-          "description": "OIDCConfig defines OIDC authentication configuration for the proxy\nThis validates incoming tokens from clients. Required for proxy mode.",
+          "description": "OIDCConfig defines OIDC authentication configuration for the proxy.\nDeprecated: Use OIDCConfigRef to reference a shared MCPOIDCConfig resource instead.\nThis field will be removed in v1beta1. OIDCConfig and OIDCConfigRef are mutually exclusive.",
           "properties": {
             "configMap": {
               "description": "ConfigMap references a ConfigMap containing OIDC configuration\nOnly used when Type is \"configmap\"",
@@ -324,7 +329,8 @@
                   "items": {
                     "type": "string"
                   },
-                  "type": "array"
+                  "type": "array",
+                  "x-kubernetes-list-type": "atomic"
                 }
               },
               "required": [
@@ -405,6 +411,35 @@
           ],
           "additionalProperties": false
         },
+        "oidcConfigRef": {
+          "description": "OIDCConfigRef references a shared MCPOIDCConfig resource for OIDC authentication.\nThe referenced MCPOIDCConfig must exist in the same namespace as this MCPRemoteProxy.\nPer-server overrides (audience, scopes) are specified here; shared provider config\nlives in the MCPOIDCConfig resource.",
+          "properties": {
+            "audience": {
+              "description": "Audience is the expected audience for token validation.\nThis MUST be unique per server to prevent token replay attacks.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "name": {
+              "description": "Name is the name of the MCPOIDCConfig resource",
+              "minLength": 1,
+              "type": "string"
+            },
+            "scopes": {
+              "description": "Scopes is the list of OAuth scopes to advertise in the well-known endpoint (RFC 9728).\nIf empty, defaults to [\"openid\"].",
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "x-kubernetes-list-type": "atomic"
+            }
+          },
+          "required": [
+            "audience",
+            "name"
+          ],
+          "type": "object",
+          "additionalProperties": false
+        },
         "proxyPort": {
           "default": 8080,
           "description": "ProxyPort is the port to expose the MCP proxy on",
@@ -452,7 +487,11 @@
                     "type": "object",
                     "additionalProperties": false
                   },
-                  "type": "array"
+                  "type": "array",
+                  "x-kubernetes-list-map-keys": [
+                    "name"
+                  ],
+                  "x-kubernetes-list-type": "map"
                 },
                 "imagePullSecrets": {
                   "description": "ImagePullSecrets allows specifying image pull secrets for the proxy runner\nThese are applied to both the Deployment and the ServiceAccount",
@@ -469,7 +508,8 @@
                     "x-kubernetes-map-type": "atomic",
                     "additionalProperties": false
                   },
-                  "type": "array"
+                  "type": "array",
+                  "x-kubernetes-list-type": "atomic"
                 },
                 "labels": {
                   "additionalProperties": {
@@ -598,7 +638,8 @@
                   "items": {
                     "type": "string"
                   },
-                  "type": "array"
+                  "type": "array",
+                  "x-kubernetes-list-type": "atomic"
                 },
                 "insecure": {
                   "default": false,
@@ -632,6 +673,7 @@
                     "samplingRate": {
                       "default": "0.05",
                       "description": "SamplingRate is the trace sampling rate (0.0-1.0)",
+                      "pattern": "^(0(\\.\\d+)?|1(\\.0+)?)$",
                       "type": "string"
                     }
                   },
@@ -693,10 +735,15 @@
         }
       },
       "required": [
-        "oidcConfig",
         "remoteURL"
       ],
       "type": "object",
+      "x-kubernetes-validations": [
+        {
+          "message": "oidcConfig and oidcConfigRef are mutually exclusive; use oidcConfigRef to reference a shared MCPOIDCConfig",
+          "rule": "!(has(self.oidcConfig) && has(self.oidcConfigRef))"
+        }
+      ],
       "additionalProperties": false
     },
     "status": {
@@ -756,7 +803,11 @@
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "type"
+          ],
+          "x-kubernetes-list-type": "map"
         },
         "externalAuthConfigHash": {
           "description": "ExternalAuthConfigHash is the hash of the referenced MCPExternalAuthConfig spec",
@@ -774,6 +825,10 @@
           "description": "ObservedGeneration reflects the generation of the most recently observed MCPRemoteProxy",
           "format": "int64",
           "type": "integer"
+        },
+        "oidcConfigHash": {
+          "description": "OIDCConfigHash is the hash of the referenced MCPOIDCConfig spec for change detection",
+          "type": "string"
         },
         "phase": {
           "description": "Phase is the current phase of the MCPRemoteProxy",

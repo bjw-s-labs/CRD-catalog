@@ -95,7 +95,11 @@
                 "type": "object",
                 "additionalProperties": false
               },
-              "type": "array"
+              "type": "array",
+              "x-kubernetes-list-map-keys": [
+                "name"
+              ],
+              "x-kubernetes-list-type": "map"
             },
             "tracing": {
               "description": "Tracing defines OpenTelemetry tracing configuration",
@@ -108,6 +112,7 @@
                 "samplingRate": {
                   "default": "0.05",
                   "description": "SamplingRate is the trace sampling rate (0.0-1.0)",
+                  "pattern": "^(0(\\.\\d+)?|1(\\.0+)?)$",
                   "type": "string"
                 }
               },
@@ -202,7 +207,11 @@
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "type"
+          ],
+          "x-kubernetes-list-type": "map"
         },
         "configHash": {
           "description": "ConfigHash is a hash of the current configuration for change detection",
@@ -240,7 +249,11 @@
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "name"
+          ],
+          "x-kubernetes-list-type": "map"
         }
       },
       "type": "object",
