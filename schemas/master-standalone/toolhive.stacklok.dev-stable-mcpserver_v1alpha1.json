@@ -35,6 +35,30 @@
           "type": "object",
           "additionalProperties": false
         },
+        "authServerRef": {
+          "description": "AuthServerRef optionally references a resource that configures an embedded\nOAuth 2.0/OIDC authorization server to authenticate MCP clients.\nCurrently the only supported kind is MCPExternalAuthConfig (type: embeddedAuthServer).",
+          "properties": {
+            "kind": {
+              "default": "MCPExternalAuthConfig",
+              "description": "Kind identifies the type of the referenced resource.",
+              "enum": [
+                "MCPExternalAuthConfig"
+              ],
+              "type": "string"
+            },
+            "name": {
+              "description": "Name is the name of the referenced resource in the same namespace.",
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "type": "object",
+          "additionalProperties": false
+        },
         "authzConfig": {
           "description": "AuthzConfig defines authorization policy configuration for the MCP server",
           "properties": {
@@ -167,7 +191,7 @@
           "type": "string"
         },
         "mcpPort": {
-          "description": "McpPort is the port that MCP server listens to",
+          "description": "MCPPort is the port that MCP server listens to",
           "format": "int32",
           "maximum": 65535,
           "minimum": 1,
@@ -487,8 +511,29 @@
         "rateLimiting": {
           "description": "RateLimiting defines rate limiting configuration for the MCP server.\nRequires Redis session storage to be configured for distributed rate limiting.",
           "properties": {
+            "perUser": {
+              "description": "PerUser is a token bucket applied independently to each authenticated user\nat the server level. Requires authentication to be enabled.\nEach unique userID creates Redis keys that expire after 2x refillPeriod.\nMemory formula: unique_users_per_TTL_window * (1 + num_tools_with_per_user_limits) keys.",
+              "properties": {
+                "maxTokens": {
+                  "description": "MaxTokens is the maximum number of tokens (bucket capacity).\nThis is also the burst size: the maximum number of requests that can be served\ninstantaneously before the bucket is depleted.",
+                  "format": "int32",
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "refillPeriod": {
+                  "description": "RefillPeriod is the duration to fully refill the bucket from zero to maxTokens.\nThe effective refill rate is maxTokens / refillPeriod tokens per second.\nFormat: Go duration string (e.g., \"1m0s\", \"30s\", \"1h0m0s\").",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "maxTokens",
+                "refillPeriod"
+              ],
+              "type": "object",
+              "additionalProperties": false
+            },
             "shared": {
-              "description": "Shared defines a token bucket shared across all users for the entire server.",
+              "description": "Shared is a token bucket shared across all users for the entire server.",
               "properties": {
                 "maxTokens": {
                   "description": "MaxTokens is the maximum number of tokens (bucket capacity).\nThis is also the burst size: the maximum number of requests that can be served\ninstantaneously before the bucket is depleted.",
@@ -511,15 +556,36 @@
             "tools": {
               "description": "Tools defines per-tool rate limit overrides.\nEach entry applies additional rate limits to calls targeting a specific tool name.\nA request must pass both the server-level limit and the per-tool limit.",
               "items": {
-                "description": "ToolRateLimitConfig defines rate limits for a specific tool.",
+                "description": "ToolRateLimitConfig defines rate limits for a specific tool.\nAt least one of shared or perUser must be configured.",
                 "properties": {
                   "name": {
                     "description": "Name is the MCP tool name this limit applies to.",
                     "minLength": 1,
                     "type": "string"
                   },
+                  "perUser": {
+                    "description": "PerUser token bucket configuration for this tool.",
+                    "properties": {
+                      "maxTokens": {
+                        "description": "MaxTokens is the maximum number of tokens (bucket capacity).\nThis is also the burst size: the maximum number of requests that can be served\ninstantaneously before the bucket is depleted.",
+                        "format": "int32",
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "refillPeriod": {
+                        "description": "RefillPeriod is the duration to fully refill the bucket from zero to maxTokens.\nThe effective refill rate is maxTokens / refillPeriod tokens per second.\nFormat: Go duration string (e.g., \"1m0s\", \"30s\", \"1h0m0s\").",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "maxTokens",
+                      "refillPeriod"
+                    ],
+                    "type": "object",
+                    "additionalProperties": false
+                  },
                   "shared": {
-                    "description": "Shared defines a token bucket shared across all users for this specific tool.",
+                    "description": "Shared token bucket for this specific tool.",
                     "properties": {
                       "maxTokens": {
                         "description": "MaxTokens is the maximum number of tokens (bucket capacity).\nThis is also the burst size: the maximum number of requests that can be served\ninstantaneously before the bucket is depleted.",
@@ -541,10 +607,15 @@
                   }
                 },
                 "required": [
-                  "name",
-                  "shared"
+                  "name"
                 ],
                 "type": "object",
+                "x-kubernetes-validations": [
+                  {
+                    "message": "at least one of shared or perUser must be configured",
+                    "rule": "has(self.shared) || has(self.perUser)"
+                  }
+                ],
                 "additionalProperties": false
               },
               "type": "array",
@@ -557,8 +628,8 @@
           "type": "object",
           "x-kubernetes-validations": [
             {
-              "message": "at least one of shared or tools must be configured",
-              "rule": "has(self.shared) || (has(self.tools) && size(self.tools) > 0)"
+              "message": "at least one of shared, perUser, or tools must be configured",
+              "rule": "has(self.shared) || has(self.perUser) || (has(self.tools) && size(self.tools) > 0)"
             }
           ],
           "additionalProperties": false
@@ -1013,6 +1084,14 @@
         {
           "message": "rateLimiting requires sessionStorage with provider 'redis'",
           "rule": "!has(self.rateLimiting) || (has(self.sessionStorage) && self.sessionStorage.provider == 'redis')"
+        },
+        {
+          "message": "rateLimiting.perUser requires authentication (oidcConfig, oidcConfigRef, or externalAuthConfigRef)",
+          "rule": "!(has(self.rateLimiting) && has(self.rateLimiting.perUser)) || has(self.oidcConfig) || has(self.oidcConfigRef) || has(self.externalAuthConfigRef)"
+        },
+        {
+          "message": "per-tool perUser rate limiting requires authentication (oidcConfig, oidcConfigRef, or externalAuthConfigRef)",
+          "rule": "!has(self.rateLimiting) || !has(self.rateLimiting.tools) || self.rateLimiting.tools.all(t, !has(t.perUser)) || has(self.oidcConfig) || has(self.oidcConfigRef) || has(self.externalAuthConfigRef)"
         }
       ],
       "additionalProperties": false
@@ -1020,6 +1099,10 @@
     "status": {
       "description": "MCPServerStatus defines the observed state of MCPServer",
       "properties": {
+        "authServerConfigHash": {
+          "description": "AuthServerConfigHash is the hash of the referenced authServerRef spec,\nused to detect configuration changes and trigger reconciliation.",
+          "type": "string"
+        },
         "conditions": {
           "description": "Conditions represent the latest available observations of the MCPServer's state",
           "items": {
@@ -1101,7 +1184,7 @@
           "description": "Phase is the current phase of the MCPServer",
           "enum": [
             "Pending",
-            "Running",
+            "Ready",
             "Failed",
             "Terminating",
             "Stopped"

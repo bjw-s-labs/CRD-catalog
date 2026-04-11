@@ -18,6 +18,37 @@
         "openTelemetry": {
           "description": "OpenTelemetry defines OpenTelemetry configuration (OTLP endpoint, tracing, metrics)",
           "properties": {
+            "caBundleRef": {
+              "description": "CABundleRef references a ConfigMap containing a CA certificate bundle for the OTLP endpoint.\nWhen specified, the operator mounts the ConfigMap into the proxyrunner pod and configures\nthe OTLP exporters to trust the custom CA. This is useful when the OTLP collector uses\nTLS with certificates signed by an internal or private CA.",
+              "properties": {
+                "configMapRef": {
+                  "description": "ConfigMapRef references a ConfigMap containing the CA certificate bundle.\nIf Key is not specified, it defaults to \"ca.crt\".",
+                  "properties": {
+                    "key": {
+                      "description": "The key to select.",
+                      "type": "string"
+                    },
+                    "name": {
+                      "default": "",
+                      "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                      "type": "string"
+                    },
+                    "optional": {
+                      "description": "Specify whether the ConfigMap or its key must be defined",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "key"
+                  ],
+                  "type": "object",
+                  "x-kubernetes-map-type": "atomic",
+                  "additionalProperties": false
+                }
+              },
+              "type": "object",
+              "additionalProperties": false
+            },
             "enabled": {
               "default": false,
               "description": "Enabled controls whether OpenTelemetry is enabled",

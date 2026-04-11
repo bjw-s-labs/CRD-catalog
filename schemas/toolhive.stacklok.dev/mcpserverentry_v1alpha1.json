@@ -124,7 +124,7 @@
           "additionalProperties": false
         },
         "remoteURL": {
-          "description": "RemoteURL is the URL of the remote MCP server.\nHTTPS is enforced by default; set the annotation\ntoolhive.stacklok.dev/allow-insecure: \"true\" to allow HTTP for development.",
+          "description": "RemoteURL is the URL of the remote MCP server.\nBoth HTTP and HTTPS schemes are accepted at admission time.",
           "pattern": "^https?://",
           "type": "string"
         },

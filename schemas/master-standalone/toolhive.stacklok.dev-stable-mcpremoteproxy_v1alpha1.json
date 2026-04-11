@@ -27,6 +27,30 @@
           "type": "object",
           "additionalProperties": false
         },
+        "authServerRef": {
+          "description": "AuthServerRef optionally references a resource that configures an embedded\nOAuth 2.0/OIDC authorization server to authenticate MCP clients.\nCurrently the only supported kind is MCPExternalAuthConfig (type: embeddedAuthServer).",
+          "properties": {
+            "kind": {
+              "default": "MCPExternalAuthConfig",
+              "description": "Kind identifies the type of the referenced resource.",
+              "enum": [
+                "MCPExternalAuthConfig"
+              ],
+              "type": "string"
+            },
+            "name": {
+              "description": "Name is the name of the referenced resource in the same namespace.",
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "type": "object",
+          "additionalProperties": false
+        },
         "authzConfig": {
           "description": "AuthzConfig defines authorization policy configuration for the proxy",
           "properties": {
@@ -749,6 +773,10 @@
     "status": {
       "description": "MCPRemoteProxyStatus defines the observed state of MCPRemoteProxy",
       "properties": {
+        "authServerConfigHash": {
+          "description": "AuthServerConfigHash is the hash of the referenced authServerRef spec,\nused to detect configuration changes and trigger reconciliation.",
+          "type": "string"
+        },
         "conditions": {
           "description": "Conditions represent the latest available observations of the MCPRemoteProxy's state",
           "items": {
