@@ -87,7 +87,7 @@
             },
             "jwksAllowPrivateIP": {
               "default": false,
-              "description": "JWKSAllowPrivateIP allows JWKS/OIDC endpoints on private IP addresses.\nNote: at runtime, if either JWKSAllowPrivateIP or ProtectedResourceAllowPrivateIP\nis true, private IPs are allowed for all OIDC HTTP requests (JWKS, discovery, introspection).",
+              "description": "JWKSAllowPrivateIP allows JWKS/OIDC endpoints on private IP addresses",
               "type": "boolean"
             },
             "jwksAuthTokenPath": {
@@ -100,7 +100,7 @@
             },
             "protectedResourceAllowPrivateIP": {
               "default": false,
-              "description": "ProtectedResourceAllowPrivateIP allows protected resource endpoint on private IP addresses.\nNote: at runtime, if either ProtectedResourceAllowPrivateIP or JWKSAllowPrivateIP\nis true, private IPs are allowed for all OIDC HTTP requests (JWKS, discovery, introspection).",
+              "description": "ProtectedResourceAllowPrivateIP allows protected resource endpoint on private IP addresses",
               "type": "boolean"
             }
           },
