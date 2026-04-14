@@ -472,7 +472,7 @@
           "minimum": 1,
           "type": "integer"
         },
-        "remoteURL": {
+        "remoteUrl": {
           "description": "RemoteURL is the URL of the remote MCP server to proxy",
           "pattern": "^https?://",
           "type": "string"
@@ -643,7 +643,7 @@
           "type": "string"
         },
         "telemetry": {
-          "description": "Telemetry defines observability configuration for the proxy",
+          "description": "Telemetry defines inline observability configuration for the proxy.\nDeprecated: Use TelemetryConfigRef to reference a shared MCPTelemetryConfig resource instead.\nThis field will be removed in a future release. Setting both telemetry and telemetryConfigRef\nis rejected by CEL validation.",
           "properties": {
             "openTelemetry": {
               "description": "OpenTelemetry defines OpenTelemetry configuration",
@@ -729,6 +729,25 @@
           "type": "object",
           "additionalProperties": false
         },
+        "telemetryConfigRef": {
+          "description": "TelemetryConfigRef references an MCPTelemetryConfig resource for shared telemetry configuration.\nThe referenced MCPTelemetryConfig must exist in the same namespace as this MCPRemoteProxy.\nCross-namespace references are not supported for security and isolation reasons.\nMutually exclusive with the deprecated inline Telemetry field.",
+          "properties": {
+            "name": {
+              "description": "Name is the name of the MCPTelemetryConfig resource",
+              "minLength": 1,
+              "type": "string"
+            },
+            "serviceName": {
+              "description": "ServiceName overrides the telemetry service name for this specific server.\nThis MUST be unique per server for proper observability (e.g., distinguishing\ntraces and metrics from different servers sharing the same collector).\nIf empty, defaults to the server name with \"thv-\" prefix at runtime.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object",
+          "additionalProperties": false
+        },
         "toolConfigRef": {
           "description": "ToolConfigRef references a MCPToolConfig resource for tool filtering and renaming.\nThe referenced MCPToolConfig must exist in the same namespace as this MCPRemoteProxy.\nCross-namespace references are not supported for security and isolation reasons.\nIf specified, this allows filtering and overriding tools from the remote MCP server.",
           "properties": {
@@ -759,13 +778,17 @@
         }
       },
       "required": [
-        "remoteURL"
+        "remoteUrl"
       ],
       "type": "object",
       "x-kubernetes-validations": [
         {
           "message": "oidcConfig and oidcConfigRef are mutually exclusive; use oidcConfigRef to reference a shared MCPOIDCConfig",
           "rule": "!(has(self.oidcConfig) && has(self.oidcConfigRef))"
+        },
+        {
+          "message": "telemetry and telemetryConfigRef are mutually exclusive; migrate to telemetryConfigRef",
+          "rule": "!(has(self.telemetry) && has(self.telemetryConfigRef))"
         }
       ],
       "additionalProperties": false
@@ -841,7 +864,7 @@
           "description": "ExternalAuthConfigHash is the hash of the referenced MCPExternalAuthConfig spec",
           "type": "string"
         },
-        "externalURL": {
+        "externalUrl": {
           "description": "ExternalURL is the external URL where the proxy can be accessed (if exposed externally)",
           "type": "string"
         },
@@ -866,6 +889,10 @@
             "Failed",
             "Terminating"
           ],
+          "type": "string"
+        },
+        "telemetryConfigHash": {
+          "description": "TelemetryConfigHash stores the hash of the referenced MCPTelemetryConfig for change detection",
           "type": "string"
         },
         "toolConfigHash": {

@@ -24,11 +24,6 @@
           "description": "DisplayName is a human-readable name for the registry.",
           "type": "string"
         },
-        "enforceServers": {
-          "default": false,
-          "description": "EnforceServers indicates whether MCPServers in this namespace must have their images\npresent in at least one registry in the namespace. When any registry in the namespace\nhas this field set to true, enforcement is enabled for the entire namespace.\nMCPServers with images not found in any registry will be rejected.\nWhen false (default), MCPServers can be deployed regardless of registry presence.",
-          "type": "boolean"
-        },
         "pgpassSecretRef": {
           "description": "PGPassSecretRef references a Secret containing a pre-created pgpass file.\n\nWhy this is a dedicated field instead of a regular volume/volumeMount:\nPostgreSQL's libpq rejects pgpass files that aren't mode 0600. Kubernetes\nsecret volumes mount files as root-owned, and the registry-api container\nruns as non-root (UID 65532). A root-owned 0600 file is unreadable by\nUID 65532, and using fsGroup changes permissions to 0640 which libpq also\nrejects. The only solution is an init container that copies the file to an\nemptyDir as the app user and runs chmod 0600. This cannot be expressed\nthrough volumes/volumeMounts alone -- it requires an init container, two\nextra volumes (secret + emptyDir), a subPath mount, and an environment\nvariable, all wired together correctly.\n\nWhen specified, the operator generates all of that plumbing invisibly.\nThe user creates the Secret with pgpass-formatted content; the operator\nhandles only the Kubernetes permission mechanics.\n\nExample Secret:\n\n\tapiVersion: v1\n\tkind: Secret\n\tmetadata:\n\t  name: my-pgpass\n\tstringData:\n\t  .pgpass: |\n\t    postgres:5432:registry:db_app:mypassword\n\t    postgres:5432:registry:db_migrator:otherpassword\n\nThen reference it:\n\n\tpgpassSecretRef:\n\t  name: my-pgpass\n\t  key: .pgpass",
           "properties": {

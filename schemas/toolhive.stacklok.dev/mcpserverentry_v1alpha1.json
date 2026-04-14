@@ -123,7 +123,7 @@
           "type": "object",
           "additionalProperties": false
         },
-        "remoteURL": {
+        "remoteUrl": {
           "description": "RemoteURL is the URL of the remote MCP server.\nBoth HTTP and HTTPS schemes are accepted at admission time.",
           "pattern": "^https?://",
           "type": "string"
@@ -139,7 +139,7 @@
       },
       "required": [
         "groupRef",
-        "remoteURL",
+        "remoteUrl",
         "transport"
       ],
       "type": "object",

@@ -2056,7 +2056,7 @@
                 "description": "BackendAuthConfig defines authentication configuration for a backend MCPServer",
                 "properties": {
                   "externalAuthConfigRef": {
-                    "description": "ExternalAuthConfigRef references an MCPExternalAuthConfig resource\nOnly used when Type is \"external_auth_config_ref\"",
+                    "description": "ExternalAuthConfigRef references an MCPExternalAuthConfig resource\nOnly used when Type is \"externalAuthConfigRef\" (or deprecated \"external_auth_config_ref\")",
                     "properties": {
                       "name": {
                         "description": "Name is the name of the MCPExternalAuthConfig resource",
@@ -2073,6 +2073,7 @@
                     "description": "Type defines the authentication type",
                     "enum": [
                       "discovered",
+                      "externalAuthConfigRef",
                       "external_auth_config_ref"
                     ],
                     "type": "string"
@@ -2091,7 +2092,7 @@
               "description": "Default defines default behavior for backends without explicit auth config",
               "properties": {
                 "externalAuthConfigRef": {
-                  "description": "ExternalAuthConfigRef references an MCPExternalAuthConfig resource\nOnly used when Type is \"external_auth_config_ref\"",
+                  "description": "ExternalAuthConfigRef references an MCPExternalAuthConfig resource\nOnly used when Type is \"externalAuthConfigRef\" (or deprecated \"external_auth_config_ref\")",
                   "properties": {
                     "name": {
                       "description": "Name is the name of the MCPExternalAuthConfig resource",
@@ -2108,6 +2109,7 @@
                   "description": "Type defines the authentication type",
                   "enum": [
                     "discovered",
+                    "externalAuthConfigRef",
                     "external_auth_config_ref"
                   ],
                   "type": "string"
