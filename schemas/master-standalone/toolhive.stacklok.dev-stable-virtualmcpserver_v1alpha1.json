@@ -607,7 +607,7 @@
           "additionalProperties": false
         },
         "config": {
-          "description": "Config is the Virtual MCP server configuration\nThe only field currently required within config is `config.groupRef`.\nGroupRef references an existing MCPGroup that defines backend workloads.\nThe referenced MCPGroup must exist in the same namespace.\nThe telemetry and audit config from here are also supported, but not required.",
+          "description": "Config is the Virtual MCP server configuration.\nThe audit config from here is also supported, but not required.\nNote: config.groupRef is deprecated in favor of spec.groupRef.\nNote: config.telemetry is deprecated \u2014 use spec.telemetryConfigRef to reference\na shared MCPTelemetryConfig resource instead.",
           "properties": {
             "aggregation": {
               "description": "Aggregation defines tool aggregation and conflict resolution strategies.\nSupports ToolConfigRef for Kubernetes-native MCPToolConfig resource references.",
@@ -1100,7 +1100,7 @@
               "type": "array"
             },
             "groupRef": {
-              "description": "Group references an existing MCPGroup that defines backend workloads.\nIn Kubernetes, the referenced MCPGroup must exist in the same namespace.",
+              "description": "Group references an existing MCPGroup that defines backend workloads.\nIn Kubernetes, the referenced MCPGroup must exist in the same namespace.\nDeprecated: Use spec.groupRef on VirtualMCPServerSpec instead.",
               "type": "string"
             },
             "incomingAuth": {
@@ -1592,7 +1592,7 @@
               "additionalProperties": false
             },
             "telemetry": {
-              "description": "Telemetry configures OpenTelemetry-based observability for the Virtual MCP server\nincluding distributed tracing, OTLP metrics export, and Prometheus metrics endpoint.",
+              "description": "Telemetry configures OpenTelemetry-based observability for the Virtual MCP server\nincluding distributed tracing, OTLP metrics export, and Prometheus metrics endpoint.\nDeprecated (Kubernetes operator only): When deploying via the operator, use\nVirtualMCPServer.spec.telemetryConfigRef to reference a shared MCPTelemetryConfig\nresource instead. This field remains valid for standalone (non-operator) deployments.",
               "properties": {
                 "caCertPath": {
                   "description": "CACertPath is the file path to a CA certificate bundle for the OTLP endpoint.\nWhen set, the OTLP exporters use this CA to verify the collector's TLS certificate\ninstead of relying solely on the system CA pool.",
@@ -1666,9 +1666,6 @@
               "additionalProperties": false
             }
           },
-          "required": [
-            "groupRef"
-          ],
           "type": "object",
           "x-kubernetes-preserve-unknown-fields": true,
           "additionalProperties": false
@@ -1678,6 +1675,21 @@
           "properties": {
             "name": {
               "description": "Name is the name of the EmbeddingServer resource",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object",
+          "additionalProperties": false
+        },
+        "groupRef": {
+          "description": "GroupRef references the MCPGroup that defines backend workloads.\nThe referenced MCPGroup must exist in the same namespace.\nThis field takes precedence over config.groupRef and should be preferred.",
+          "properties": {
+            "name": {
+              "description": "Name is the name of the MCPGroup resource in the same namespace",
+              "minLength": 1,
               "type": "string"
             }
           },
@@ -1891,7 +1903,7 @@
                     },
                     "jwksAllowPrivateIP": {
                       "default": false,
-                      "description": "JWKSAllowPrivateIP allows JWKS/OIDC endpoints on private IP addresses\nUse with caution - only enable for trusted internal IDPs",
+                      "description": "JWKSAllowPrivateIP allows JWKS/OIDC endpoints on private IP addresses.\nUse with caution - only enable for trusted internal IDPs.\nNote: at runtime, if either JWKSAllowPrivateIP or ProtectedResourceAllowPrivateIP\nis true, private IPs are allowed for all OIDC HTTP requests (JWKS, discovery, introspection).",
                       "type": "boolean"
                     },
                     "jwksAuthTokenPath": {
@@ -1904,7 +1916,7 @@
                     },
                     "protectedResourceAllowPrivateIP": {
                       "default": false,
-                      "description": "ProtectedResourceAllowPrivateIP allows protected resource endpoint on private IP addresses\nUse with caution - only enable for trusted internal IDPs or testing",
+                      "description": "ProtectedResourceAllowPrivateIP allows protected resource endpoint on private IP addresses.\nUse with caution - only enable for trusted internal IDPs or testing.\nNote: at runtime, if either ProtectedResourceAllowPrivateIP or JWKSAllowPrivateIP\nis true, private IPs are allowed for all OIDC HTTP requests (JWKS, discovery, introspection).",
                       "type": "boolean"
                     },
                     "scopes": {
@@ -2226,12 +2238,37 @@
             }
           ],
           "additionalProperties": false
+        },
+        "telemetryConfigRef": {
+          "description": "TelemetryConfigRef references an MCPTelemetryConfig resource for shared telemetry configuration.\nThe referenced MCPTelemetryConfig must exist in the same namespace as this VirtualMCPServer.\nCross-namespace references are not supported for security and isolation reasons.\nMutually exclusive with the deprecated inline config.telemetry field.",
+          "properties": {
+            "name": {
+              "description": "Name is the name of the MCPTelemetryConfig resource",
+              "minLength": 1,
+              "type": "string"
+            },
+            "serviceName": {
+              "description": "ServiceName overrides the telemetry service name for this specific server.\nThis MUST be unique per server for proper observability (e.g., distinguishing\ntraces and metrics from different servers sharing the same collector).\nIf empty, defaults to the server name with \"thv-\" prefix at runtime.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object",
+          "additionalProperties": false
         }
       },
       "required": [
         "incomingAuth"
       ],
       "type": "object",
+      "x-kubernetes-validations": [
+        {
+          "message": "config.telemetry and telemetryConfigRef are mutually exclusive; migrate to telemetryConfigRef",
+          "rule": "!(has(self.config.telemetry) && has(self.telemetryConfigRef))"
+        }
+      ],
       "additionalProperties": false
     },
     "status": {
@@ -2389,6 +2426,10 @@
             "Degraded",
             "Failed"
           ],
+          "type": "string"
+        },
+        "telemetryConfigHash": {
+          "description": "TelemetryConfigHash is the hash of the referenced MCPTelemetryConfig spec for change detection.\nOnly populated when TelemetryConfigRef is set.",
           "type": "string"
         },
         "url": {

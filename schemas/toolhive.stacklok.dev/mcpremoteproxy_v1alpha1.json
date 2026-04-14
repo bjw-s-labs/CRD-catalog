@@ -142,8 +142,19 @@
           "additionalProperties": false
         },
         "groupRef": {
-          "description": "GroupRef is the name of the MCPGroup this proxy belongs to\nMust reference an existing MCPGroup in the same namespace",
-          "type": "string"
+          "description": "GroupRef references the MCPGroup this proxy belongs to.\nThe referenced MCPGroup must be in the same namespace.",
+          "properties": {
+            "name": {
+              "description": "Name is the name of the MCPGroup resource in the same namespace",
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object",
+          "additionalProperties": false
         },
         "headerForward": {
           "description": "HeaderForward configures headers to inject into requests to the remote MCP server.\nUse this to add custom headers like X-Tenant-ID or correlation IDs.",
@@ -332,7 +343,7 @@
                 },
                 "jwksAllowPrivateIP": {
                   "default": false,
-                  "description": "JWKSAllowPrivateIP allows JWKS/OIDC endpoints on private IP addresses\nUse with caution - only enable for trusted internal IDPs",
+                  "description": "JWKSAllowPrivateIP allows JWKS/OIDC endpoints on private IP addresses.\nUse with caution - only enable for trusted internal IDPs.\nNote: at runtime, if either JWKSAllowPrivateIP or ProtectedResourceAllowPrivateIP\nis true, private IPs are allowed for all OIDC HTTP requests (JWKS, discovery, introspection).",
                   "type": "boolean"
                 },
                 "jwksAuthTokenPath": {
@@ -345,7 +356,7 @@
                 },
                 "protectedResourceAllowPrivateIP": {
                   "default": false,
-                  "description": "ProtectedResourceAllowPrivateIP allows protected resource endpoint on private IP addresses\nUse with caution - only enable for trusted internal IDPs or testing",
+                  "description": "ProtectedResourceAllowPrivateIP allows protected resource endpoint on private IP addresses.\nUse with caution - only enable for trusted internal IDPs or testing.\nNote: at runtime, if either ProtectedResourceAllowPrivateIP or JWKSAllowPrivateIP\nis true, private IPs are allowed for all OIDC HTTP requests (JWKS, discovery, introspection).",
                   "type": "boolean"
                 },
                 "scopes": {
