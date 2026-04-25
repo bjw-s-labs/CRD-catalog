@@ -1,5 +1,5 @@
 {
-  "description": "MCPOIDCConfig is the Schema for the mcpoidcconfigs API.\nMCPOIDCConfig resources are namespace-scoped and can only be referenced by\nMCPServer resources within the same namespace. Cross-namespace references\nare not supported for security and isolation reasons.",
+  "description": "MCPOIDCConfig is the deprecated v1alpha1 version of the MCPOIDCConfig resource.",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -87,7 +87,7 @@
             },
             "jwksAllowPrivateIP": {
               "default": false,
-              "description": "JWKSAllowPrivateIP allows JWKS/OIDC endpoints on private IP addresses",
+              "description": "JWKSAllowPrivateIP allows JWKS/OIDC endpoints on private IP addresses.\nNote: at runtime, if either JWKSAllowPrivateIP or ProtectedResourceAllowPrivateIP\nis true, private IPs are allowed for all OIDC HTTP requests (JWKS, discovery, introspection).",
               "type": "boolean"
             },
             "jwksAuthTokenPath": {
@@ -100,7 +100,7 @@
             },
             "protectedResourceAllowPrivateIP": {
               "default": false,
-              "description": "ProtectedResourceAllowPrivateIP allows protected resource endpoint on private IP addresses",
+              "description": "ProtectedResourceAllowPrivateIP allows protected resource endpoint on private IP addresses.\nNote: at runtime, if either ProtectedResourceAllowPrivateIP or JWKSAllowPrivateIP\nis true, private IPs are allowed for all OIDC HTTP requests (JWKS, discovery, introspection).",
               "type": "boolean"
             }
           },

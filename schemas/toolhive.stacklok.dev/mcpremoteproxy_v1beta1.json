@@ -1,5 +1,5 @@
 {
-  "description": "MCPServer is the deprecated v1alpha1 version of the MCPServer resource.",
+  "description": "MCPRemoteProxy is the Schema for the mcpremoteproxies API\nIt enables proxying remote MCP servers with authentication, authorization, audit logging, and tool filtering",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -13,18 +13,10 @@
       "type": "object"
     },
     "spec": {
-      "description": "MCPServerSpec defines the desired state of MCPServer",
+      "description": "MCPRemoteProxySpec defines the desired state of MCPRemoteProxy",
       "properties": {
-        "args": {
-          "description": "Args are additional arguments to pass to the MCP server",
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "x-kubernetes-list-type": "atomic"
-        },
         "audit": {
-          "description": "Audit defines audit logging configuration for the MCP server",
+          "description": "Audit defines audit logging configuration for the proxy",
           "properties": {
             "enabled": {
               "default": false,
@@ -60,7 +52,7 @@
           "additionalProperties": false
         },
         "authzConfig": {
-          "description": "AuthzConfig defines authorization policy configuration for the MCP server",
+          "description": "AuthzConfig defines authorization policy configuration for the proxy",
           "properties": {
             "configMap": {
               "description": "ConfigMap references a ConfigMap containing authorization configuration\nOnly used when Type is \"configMap\"",
@@ -131,45 +123,12 @@
           ],
           "additionalProperties": false
         },
-        "backendReplicas": {
-          "description": "BackendReplicas is the desired number of MCP server backend pod replicas.\nThis controls the backend Deployment (the MCP server container itself),\nindependent of the proxy runner controlled by Replicas.\nWhen nil, the operator does not set Deployment.Spec.Replicas, leaving replica\nmanagement to an HPA or other external controller.",
-          "format": "int32",
-          "minimum": 0,
-          "type": "integer"
-        },
         "endpointPrefix": {
           "description": "EndpointPrefix is the path prefix to prepend to SSE endpoint URLs.\nThis is used to handle path-based ingress routing scenarios where the ingress\nstrips a path prefix before forwarding to the backend.",
           "type": "string"
         },
-        "env": {
-          "description": "Env are environment variables to set in the MCP server container",
-          "items": {
-            "description": "EnvVar represents an environment variable in a container",
-            "properties": {
-              "name": {
-                "description": "Name of the environment variable",
-                "type": "string"
-              },
-              "value": {
-                "description": "Value of the environment variable",
-                "type": "string"
-              }
-            },
-            "required": [
-              "name",
-              "value"
-            ],
-            "type": "object",
-            "additionalProperties": false
-          },
-          "type": "array",
-          "x-kubernetes-list-map-keys": [
-            "name"
-          ],
-          "x-kubernetes-list-type": "map"
-        },
         "externalAuthConfigRef": {
-          "description": "ExternalAuthConfigRef references a MCPExternalAuthConfig resource for external authentication.\nThe referenced MCPExternalAuthConfig must exist in the same namespace as this MCPServer.",
+          "description": "ExternalAuthConfigRef references a MCPExternalAuthConfig resource for token exchange.\nWhen specified, the proxy will exchange validated incoming tokens for remote service tokens.\nThe referenced MCPExternalAuthConfig must exist in the same namespace as this MCPRemoteProxy.",
           "properties": {
             "name": {
               "description": "Name is the name of the MCPExternalAuthConfig resource",
@@ -183,7 +142,7 @@
           "additionalProperties": false
         },
         "groupRef": {
-          "description": "GroupRef references the MCPGroup this server belongs to.\nThe referenced MCPGroup must be in the same namespace.",
+          "description": "GroupRef references the MCPGroup this proxy belongs to.\nThe referenced MCPGroup must be in the same namespace.",
           "properties": {
             "name": {
               "description": "Name is the name of the MCPGroup resource in the same namespace",
@@ -197,19 +156,66 @@
           "type": "object",
           "additionalProperties": false
         },
-        "image": {
-          "description": "Image is the container image for the MCP server",
-          "type": "string"
-        },
-        "mcpPort": {
-          "description": "MCPPort is the port that MCP server listens to",
-          "format": "int32",
-          "maximum": 65535,
-          "minimum": 1,
-          "type": "integer"
+        "headerForward": {
+          "description": "HeaderForward configures headers to inject into requests to the remote MCP server.\nUse this to add custom headers like X-Tenant-ID or correlation IDs.",
+          "properties": {
+            "addHeadersFromSecret": {
+              "description": "AddHeadersFromSecret references Kubernetes Secrets for sensitive header values.",
+              "items": {
+                "description": "HeaderFromSecret defines a header whose value comes from a Kubernetes Secret.",
+                "properties": {
+                  "headerName": {
+                    "description": "HeaderName is the HTTP header name (e.g., \"X-API-Key\")",
+                    "maxLength": 255,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "valueSecretRef": {
+                    "description": "ValueSecretRef references the Secret and key containing the header value",
+                    "properties": {
+                      "key": {
+                        "description": "Key is the key within the secret",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "Name is the name of the secret",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "name"
+                    ],
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "headerName",
+                  "valueSecretRef"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              },
+              "type": "array",
+              "x-kubernetes-list-map-keys": [
+                "headerName"
+              ],
+              "x-kubernetes-list-type": "map"
+            },
+            "addPlaintextHeaders": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "AddPlaintextHeaders is a map of header names to literal values to inject into requests.\nWARNING: Values are stored in plaintext and visible via kubectl commands.\nUse addHeadersFromSecret for sensitive data like API keys or tokens.",
+              "type": "object"
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
         },
         "oidcConfigRef": {
-          "description": "OIDCConfigRef references a shared MCPOIDCConfig resource for OIDC authentication.\nThe referenced MCPOIDCConfig must exist in the same namespace as this MCPServer.\nPer-server overrides (audience, scopes) are specified here; shared provider config\nlives in the MCPOIDCConfig resource.",
+          "description": "OIDCConfigRef references a shared MCPOIDCConfig resource for OIDC authentication.\nThe referenced MCPOIDCConfig must exist in the same namespace as this MCPRemoteProxy.\nPer-server overrides (audience, scopes) are specified here; shared provider config\nlives in the MCPOIDCConfig resource.",
           "properties": {
             "audience": {
               "description": "Audience is the expected audience for token validation.\nThis MUST be unique per server to prevent token replay attacks.",
@@ -241,187 +247,18 @@
           "type": "object",
           "additionalProperties": false
         },
-        "permissionProfile": {
-          "description": "PermissionProfile defines the permission profile to use",
-          "properties": {
-            "key": {
-              "description": "Key is the key in the ConfigMap that contains the permission profile\nOnly used when Type is \"configmap\"",
-              "type": "string"
-            },
-            "name": {
-              "description": "Name is the name of the permission profile\nIf Type is \"builtin\", Name must be one of: \"none\", \"network\"\nIf Type is \"configmap\", Name is the name of the ConfigMap",
-              "type": "string"
-            },
-            "type": {
-              "default": "builtin",
-              "description": "Type is the type of permission profile reference",
-              "enum": [
-                "builtin",
-                "configmap"
-              ],
-              "type": "string"
-            }
-          },
-          "required": [
-            "name",
-            "type"
-          ],
-          "type": "object",
-          "additionalProperties": false
-        },
-        "podTemplateSpec": {
-          "description": "PodTemplateSpec defines the pod template to use for the MCP server\nThis allows for customizing the pod configuration beyond what is provided by the other fields.\nNote that to modify the specific container the MCP server runs in, you must specify\nthe `mcp` container name in the PodTemplateSpec.\nThis field accepts a PodTemplateSpec object as JSON/YAML.",
-          "type": "object",
-          "x-kubernetes-preserve-unknown-fields": true
-        },
-        "proxyMode": {
-          "default": "streamable-http",
-          "description": "ProxyMode is the proxy mode for stdio transport (sse or streamable-http)\nThis setting is ONLY applicable when Transport is \"stdio\".\nFor direct transports (sse, streamable-http), this field is ignored.\nThe default value is applied by Kubernetes but will be ignored for non-stdio transports.",
-          "enum": [
-            "sse",
-            "streamable-http"
-          ],
-          "type": "string"
-        },
         "proxyPort": {
           "default": 8080,
-          "description": "ProxyPort is the port to expose the proxy runner on",
+          "description": "ProxyPort is the port to expose the MCP proxy on",
           "format": "int32",
           "maximum": 65535,
           "minimum": 1,
           "type": "integer"
         },
-        "rateLimiting": {
-          "description": "RateLimiting defines rate limiting configuration for the MCP server.\nRequires Redis session storage to be configured for distributed rate limiting.",
-          "properties": {
-            "perUser": {
-              "description": "PerUser is a token bucket applied independently to each authenticated user\nat the server level. Requires authentication to be enabled.\nEach unique userID creates Redis keys that expire after 2x refillPeriod.\nMemory formula: unique_users_per_TTL_window * (1 + num_tools_with_per_user_limits) keys.",
-              "properties": {
-                "maxTokens": {
-                  "description": "MaxTokens is the maximum number of tokens (bucket capacity).\nThis is also the burst size: the maximum number of requests that can be served\ninstantaneously before the bucket is depleted.",
-                  "format": "int32",
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "refillPeriod": {
-                  "description": "RefillPeriod is the duration to fully refill the bucket from zero to maxTokens.\nThe effective refill rate is maxTokens / refillPeriod tokens per second.\nFormat: Go duration string (e.g., \"1m0s\", \"30s\", \"1h0m0s\").",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "maxTokens",
-                "refillPeriod"
-              ],
-              "type": "object",
-              "additionalProperties": false
-            },
-            "shared": {
-              "description": "Shared is a token bucket shared across all users for the entire server.",
-              "properties": {
-                "maxTokens": {
-                  "description": "MaxTokens is the maximum number of tokens (bucket capacity).\nThis is also the burst size: the maximum number of requests that can be served\ninstantaneously before the bucket is depleted.",
-                  "format": "int32",
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "refillPeriod": {
-                  "description": "RefillPeriod is the duration to fully refill the bucket from zero to maxTokens.\nThe effective refill rate is maxTokens / refillPeriod tokens per second.\nFormat: Go duration string (e.g., \"1m0s\", \"30s\", \"1h0m0s\").",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "maxTokens",
-                "refillPeriod"
-              ],
-              "type": "object",
-              "additionalProperties": false
-            },
-            "tools": {
-              "description": "Tools defines per-tool rate limit overrides.\nEach entry applies additional rate limits to calls targeting a specific tool name.\nA request must pass both the server-level limit and the per-tool limit.",
-              "items": {
-                "description": "ToolRateLimitConfig defines rate limits for a specific tool.\nAt least one of shared or perUser must be configured.",
-                "properties": {
-                  "name": {
-                    "description": "Name is the MCP tool name this limit applies to.",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  "perUser": {
-                    "description": "PerUser token bucket configuration for this tool.",
-                    "properties": {
-                      "maxTokens": {
-                        "description": "MaxTokens is the maximum number of tokens (bucket capacity).\nThis is also the burst size: the maximum number of requests that can be served\ninstantaneously before the bucket is depleted.",
-                        "format": "int32",
-                        "minimum": 1,
-                        "type": "integer"
-                      },
-                      "refillPeriod": {
-                        "description": "RefillPeriod is the duration to fully refill the bucket from zero to maxTokens.\nThe effective refill rate is maxTokens / refillPeriod tokens per second.\nFormat: Go duration string (e.g., \"1m0s\", \"30s\", \"1h0m0s\").",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "maxTokens",
-                      "refillPeriod"
-                    ],
-                    "type": "object",
-                    "additionalProperties": false
-                  },
-                  "shared": {
-                    "description": "Shared token bucket for this specific tool.",
-                    "properties": {
-                      "maxTokens": {
-                        "description": "MaxTokens is the maximum number of tokens (bucket capacity).\nThis is also the burst size: the maximum number of requests that can be served\ninstantaneously before the bucket is depleted.",
-                        "format": "int32",
-                        "minimum": 1,
-                        "type": "integer"
-                      },
-                      "refillPeriod": {
-                        "description": "RefillPeriod is the duration to fully refill the bucket from zero to maxTokens.\nThe effective refill rate is maxTokens / refillPeriod tokens per second.\nFormat: Go duration string (e.g., \"1m0s\", \"30s\", \"1h0m0s\").",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "maxTokens",
-                      "refillPeriod"
-                    ],
-                    "type": "object",
-                    "additionalProperties": false
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object",
-                "x-kubernetes-validations": [
-                  {
-                    "message": "at least one of shared or perUser must be configured",
-                    "rule": "has(self.shared) || has(self.perUser)"
-                  }
-                ],
-                "additionalProperties": false
-              },
-              "type": "array",
-              "x-kubernetes-list-map-keys": [
-                "name"
-              ],
-              "x-kubernetes-list-type": "map"
-            }
-          },
-          "type": "object",
-          "x-kubernetes-validations": [
-            {
-              "message": "at least one of shared, perUser, or tools must be configured",
-              "rule": "has(self.shared) || has(self.perUser) || (has(self.tools) && size(self.tools) > 0)"
-            }
-          ],
-          "additionalProperties": false
-        },
-        "replicas": {
-          "description": "Replicas is the desired number of proxy runner (thv run) pod replicas.\nMCPServer creates two separate Deployments: one for the proxy runner and one\nfor the MCP server backend. This field controls the proxy runner Deployment.\nWhen nil, the operator does not set Deployment.Spec.Replicas, leaving replica\nmanagement to an HPA or other external controller.",
-          "format": "int32",
-          "minimum": 0,
-          "type": "integer"
+        "remoteUrl": {
+          "description": "RemoteURL is the URL of the remote MCP server to proxy",
+          "pattern": "^https?://",
+          "type": "string"
         },
         "resourceOverrides": {
           "description": "ResourceOverrides allows overriding annotations and labels for resources created by the operator",
@@ -539,7 +376,7 @@
           "additionalProperties": false
         },
         "resources": {
-          "description": "Resources defines the resource requirements for the MCP server container",
+          "description": "Resources defines the resource requirements for the proxy container",
           "properties": {
             "limits": {
               "description": "Limits describes the maximum amount of compute resources allowed",
@@ -575,39 +412,8 @@
           "type": "object",
           "additionalProperties": false
         },
-        "secrets": {
-          "description": "Secrets are references to secrets to mount in the MCP server container",
-          "items": {
-            "description": "SecretRef is a reference to a secret",
-            "properties": {
-              "key": {
-                "description": "Key is the key in the secret itself",
-                "type": "string"
-              },
-              "name": {
-                "description": "Name is the name of the secret",
-                "type": "string"
-              },
-              "targetEnvName": {
-                "description": "TargetEnvName is the environment variable to be used when setting up the secret in the MCP server\nIf left unspecified, it defaults to the key",
-                "type": "string"
-              }
-            },
-            "required": [
-              "key",
-              "name"
-            ],
-            "type": "object",
-            "additionalProperties": false
-          },
-          "type": "array",
-          "x-kubernetes-list-map-keys": [
-            "name"
-          ],
-          "x-kubernetes-list-type": "map"
-        },
         "serviceAccount": {
-          "description": "ServiceAccount is the name of an already existing service account to use by the MCP server.\nIf not specified, a ServiceAccount will be created automatically and used by the MCP server.",
+          "description": "ServiceAccount is the name of an already existing service account to use by the proxy.\nIf not specified, a ServiceAccount will be created automatically and used by the proxy.",
           "type": "string"
         },
         "sessionAffinity": {
@@ -619,67 +425,8 @@
           ],
           "type": "string"
         },
-        "sessionStorage": {
-          "description": "SessionStorage configures session storage for stateful horizontal scaling.\nWhen nil, no session storage is configured.",
-          "properties": {
-            "address": {
-              "description": "Address is the Redis server address (required when provider is redis)",
-              "minLength": 1,
-              "type": "string"
-            },
-            "db": {
-              "default": 0,
-              "description": "DB is the Redis database number",
-              "format": "int32",
-              "minimum": 0,
-              "type": "integer"
-            },
-            "keyPrefix": {
-              "description": "KeyPrefix is an optional prefix for all Redis keys used by ToolHive",
-              "type": "string"
-            },
-            "passwordRef": {
-              "description": "PasswordRef is a reference to a Secret key containing the Redis password",
-              "properties": {
-                "key": {
-                  "description": "Key is the key within the secret",
-                  "type": "string"
-                },
-                "name": {
-                  "description": "Name is the name of the secret",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "key",
-                "name"
-              ],
-              "type": "object",
-              "additionalProperties": false
-            },
-            "provider": {
-              "description": "Provider is the session storage backend type",
-              "enum": [
-                "memory",
-                "redis"
-              ],
-              "type": "string"
-            }
-          },
-          "required": [
-            "provider"
-          ],
-          "type": "object",
-          "x-kubernetes-validations": [
-            {
-              "message": "address is required",
-              "rule": "self.provider == 'redis' ? has(self.address) : true"
-            }
-          ],
-          "additionalProperties": false
-        },
         "telemetryConfigRef": {
-          "description": "TelemetryConfigRef references an MCPTelemetryConfig resource for shared telemetry configuration.\nThe referenced MCPTelemetryConfig must exist in the same namespace as this MCPServer.\nCross-namespace references are not supported for security and isolation reasons.",
+          "description": "TelemetryConfigRef references an MCPTelemetryConfig resource for shared telemetry configuration.\nThe referenced MCPTelemetryConfig must exist in the same namespace as this MCPRemoteProxy.\nCross-namespace references are not supported for security and isolation reasons.",
           "properties": {
             "name": {
               "description": "Name is the name of the MCPTelemetryConfig resource",
@@ -698,7 +445,7 @@
           "additionalProperties": false
         },
         "toolConfigRef": {
-          "description": "ToolConfigRef references a MCPToolConfig resource for tool filtering and renaming.\nThe referenced MCPToolConfig must exist in the same namespace as this MCPServer.\nCross-namespace references are not supported for security and isolation reasons.",
+          "description": "ToolConfigRef references a MCPToolConfig resource for tool filtering and renaming.\nThe referenced MCPToolConfig must exist in the same namespace as this MCPRemoteProxy.\nCross-namespace references are not supported for security and isolation reasons.\nIf specified, this allows filtering and overriding tools from the remote MCP server.",
           "properties": {
             "name": {
               "description": "Name is the name of the MCPToolConfig resource in the same namespace",
@@ -712,12 +459,11 @@
           "additionalProperties": false
         },
         "transport": {
-          "default": "stdio",
-          "description": "Transport is the transport method for the MCP server (stdio, streamable-http or sse)",
+          "default": "streamable-http",
+          "description": "Transport is the transport method for the remote proxy (sse or streamable-http)",
           "enum": [
-            "stdio",
-            "streamable-http",
-            "sse"
+            "sse",
+            "streamable-http"
           ],
           "type": "string"
         },
@@ -725,74 +471,23 @@
           "default": false,
           "description": "TrustProxyHeaders indicates whether to trust X-Forwarded-* headers from reverse proxies\nWhen enabled, the proxy will use X-Forwarded-Proto, X-Forwarded-Host, X-Forwarded-Port,\nand X-Forwarded-Prefix headers to construct endpoint URLs",
           "type": "boolean"
-        },
-        "volumes": {
-          "description": "Volumes are volumes to mount in the MCP server container",
-          "items": {
-            "description": "Volume represents a volume to mount in a container",
-            "properties": {
-              "hostPath": {
-                "description": "HostPath is the path on the host to mount",
-                "type": "string"
-              },
-              "mountPath": {
-                "description": "MountPath is the path in the container to mount to",
-                "type": "string"
-              },
-              "name": {
-                "description": "Name is the name of the volume",
-                "type": "string"
-              },
-              "readOnly": {
-                "default": false,
-                "description": "ReadOnly specifies whether the volume should be mounted read-only",
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "hostPath",
-              "mountPath",
-              "name"
-            ],
-            "type": "object",
-            "additionalProperties": false
-          },
-          "type": "array",
-          "x-kubernetes-list-map-keys": [
-            "name"
-          ],
-          "x-kubernetes-list-type": "map"
         }
       },
       "required": [
-        "image"
+        "remoteUrl"
       ],
       "type": "object",
-      "x-kubernetes-validations": [
-        {
-          "message": "rateLimiting requires sessionStorage with provider 'redis'",
-          "rule": "!has(self.rateLimiting) || (has(self.sessionStorage) && self.sessionStorage.provider == 'redis')"
-        },
-        {
-          "message": "rateLimiting.perUser requires authentication (oidcConfigRef or externalAuthConfigRef)",
-          "rule": "!(has(self.rateLimiting) && has(self.rateLimiting.perUser)) || has(self.oidcConfigRef) || has(self.externalAuthConfigRef)"
-        },
-        {
-          "message": "per-tool perUser rate limiting requires authentication (oidcConfigRef or externalAuthConfigRef)",
-          "rule": "!has(self.rateLimiting) || !has(self.rateLimiting.tools) || self.rateLimiting.tools.all(t, !has(t.perUser)) || has(self.oidcConfigRef) || has(self.externalAuthConfigRef)"
-        }
-      ],
       "additionalProperties": false
     },
     "status": {
-      "description": "MCPServerStatus defines the observed state of MCPServer",
+      "description": "MCPRemoteProxyStatus defines the observed state of MCPRemoteProxy",
       "properties": {
         "authServerConfigHash": {
           "description": "AuthServerConfigHash is the hash of the referenced authServerRef spec,\nused to detect configuration changes and trigger reconciliation.",
           "type": "string"
         },
         "conditions": {
-          "description": "Conditions represent the latest available observations of the MCPServer's state",
+          "description": "Conditions represent the latest available observations of the MCPRemoteProxy's state",
           "items": {
             "description": "Condition contains details for one aspect of the current state of this API Resource.",
             "properties": {
@@ -855,12 +550,16 @@
           "description": "ExternalAuthConfigHash is the hash of the referenced MCPExternalAuthConfig spec",
           "type": "string"
         },
+        "externalUrl": {
+          "description": "ExternalURL is the external URL where the proxy can be accessed (if exposed externally)",
+          "type": "string"
+        },
         "message": {
           "description": "Message provides additional information about the current phase",
           "type": "string"
         },
         "observedGeneration": {
-          "description": "ObservedGeneration reflects the generation most recently observed by the controller",
+          "description": "ObservedGeneration reflects the generation of the most recently observed MCPRemoteProxy",
           "format": "int64",
           "type": "integer"
         },
@@ -869,23 +568,17 @@
           "type": "string"
         },
         "phase": {
-          "description": "Phase is the current phase of the MCPServer",
+          "description": "Phase is the current phase of the MCPRemoteProxy",
           "enum": [
             "Pending",
             "Ready",
             "Failed",
-            "Terminating",
-            "Stopped"
+            "Terminating"
           ],
           "type": "string"
         },
-        "readyReplicas": {
-          "description": "ReadyReplicas is the number of ready proxy replicas",
-          "format": "int32",
-          "type": "integer"
-        },
         "telemetryConfigHash": {
-          "description": "TelemetryConfigHash is the hash of the referenced MCPTelemetryConfig spec for change detection",
+          "description": "TelemetryConfigHash stores the hash of the referenced MCPTelemetryConfig for change detection",
           "type": "string"
         },
         "toolConfigHash": {
@@ -893,7 +586,7 @@
           "type": "string"
         },
         "url": {
-          "description": "URL is the URL where the MCP server can be accessed",
+          "description": "URL is the internal cluster URL where the proxy can be accessed",
           "type": "string"
         }
       },

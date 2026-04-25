@@ -1,5 +1,5 @@
 {
-  "description": "MCPServerEntry is the Schema for the mcpserverentries API.\nIt declares a remote MCP server endpoint for vMCP discovery and routing\nwithout deploying any infrastructure.",
+  "description": "MCPServerEntry is the deprecated v1alpha1 version of the MCPServerEntry resource.",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -61,9 +61,19 @@
           "additionalProperties": false
         },
         "groupRef": {
-          "description": "GroupRef is the name of the MCPGroup this entry belongs to.\nRequired \u2014 every MCPServerEntry must be part of a group for vMCP discovery.",
-          "minLength": 1,
-          "type": "string"
+          "description": "GroupRef references the MCPGroup this entry belongs to.\nRequired \u2014 every MCPServerEntry must be part of a group for vMCP discovery.",
+          "properties": {
+            "name": {
+              "description": "Name is the name of the MCPGroup resource in the same namespace",
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object",
+          "additionalProperties": false
         },
         "headerForward": {
           "description": "HeaderForward configures headers to inject into requests to the remote MCP server.\nUse this to add custom headers like API keys or correlation IDs.",

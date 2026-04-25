@@ -1,5 +1,5 @@
 {
-  "description": "MCPExternalAuthConfig is the deprecated v1alpha1 version of the MCPExternalAuthConfig resource.",
+  "description": "MCPExternalAuthConfig is the Schema for the mcpexternalauthconfigs API.\nMCPExternalAuthConfig resources are namespace-scoped and can only be referenced by\nMCPServer resources within the same namespace. Cross-namespace references\nare not supported for security and isolation reasons.",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",

@@ -1,5 +1,5 @@
 {
-  "description": "MCPTelemetryConfig is the deprecated v1alpha1 version of the MCPTelemetryConfig resource.",
+  "description": "MCPOIDCConfig is the Schema for the mcpoidcconfigs API.\nMCPOIDCConfig resources are namespace-scoped and can only be referenced by\nMCPServer resources within the same namespace. Cross-namespace references\nare not supported for security and isolation reasons.",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -13,13 +13,13 @@
       "type": "object"
     },
     "spec": {
-      "description": "MCPTelemetryConfigSpec defines the desired state of MCPTelemetryConfig.\nThe spec uses a nested structure with openTelemetry and prometheus sub-objects\nfor clear separation of concerns.",
+      "description": "MCPOIDCConfigSpec defines the desired state of MCPOIDCConfig.\nMCPOIDCConfig resources are namespace-scoped and can only be referenced by\nMCPServer resources in the same namespace.",
       "properties": {
-        "openTelemetry": {
-          "description": "OpenTelemetry defines OpenTelemetry configuration (OTLP endpoint, tracing, metrics)",
+        "inline": {
+          "description": "Inline contains direct OIDC configuration.\nOnly used when Type is \"inline\".",
           "properties": {
             "caBundleRef": {
-              "description": "CABundleRef references a ConfigMap containing a CA certificate bundle for the OTLP endpoint.\nWhen specified, the operator mounts the ConfigMap into the proxyrunner pod and configures\nthe OTLP exporters to trust the custom CA. This is useful when the OTLP collector uses\nTLS with certificates signed by an internal or private CA.",
+              "description": "CABundleRef references a ConfigMap containing the CA certificate bundle.\nWhen specified, ToolHive auto-mounts the ConfigMap and auto-computes ThvCABundlePath.",
               "properties": {
                 "configMapRef": {
                   "description": "ConfigMapRef references a ConfigMap containing the CA certificate bundle.\nIf Key is not specified, it defaults to \"ca.crt\".",
@@ -49,143 +49,129 @@
               "type": "object",
               "additionalProperties": false
             },
-            "enabled": {
-              "default": false,
-              "description": "Enabled controls whether OpenTelemetry is enabled",
-              "type": "boolean"
-            },
-            "endpoint": {
-              "description": "Endpoint is the OTLP endpoint URL for tracing and metrics",
+            "clientId": {
+              "description": "ClientID is the OIDC client ID",
               "type": "string"
             },
-            "headers": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "description": "Headers contains authentication headers for the OTLP endpoint.\nFor secret-backed credentials, use sensitiveHeaders instead.",
-              "type": "object"
-            },
-            "insecure": {
-              "default": false,
-              "description": "Insecure indicates whether to use HTTP instead of HTTPS for the OTLP endpoint",
-              "type": "boolean"
-            },
-            "metrics": {
-              "description": "Metrics defines OpenTelemetry metrics-specific configuration",
+            "clientSecretRef": {
+              "description": "ClientSecretRef is a reference to a Kubernetes Secret containing the client secret",
               "properties": {
-                "enabled": {
-                  "default": false,
-                  "description": "Enabled controls whether OTLP metrics are sent",
-                  "type": "boolean"
-                }
-              },
-              "type": "object",
-              "additionalProperties": false
-            },
-            "resourceAttributes": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "description": "ResourceAttributes contains custom resource attributes to be added to all telemetry signals.\nThese become OTel resource attributes (e.g., deployment.environment, service.namespace).\nNote: service.name is intentionally excluded \u2014 it is set per-server via\nMCPTelemetryConfigReference.ServiceName.",
-              "type": "object"
-            },
-            "sensitiveHeaders": {
-              "description": "SensitiveHeaders contains headers whose values are stored in Kubernetes Secrets.\nUse this for credential headers (e.g., API keys, bearer tokens) instead of\nembedding secrets in the headers field.",
-              "items": {
-                "description": "SensitiveHeader represents a header whose value is stored in a Kubernetes Secret.\nThis allows credential headers (e.g., API keys, bearer tokens) to be securely\nreferenced without embedding secrets inline in the MCPTelemetryConfig resource.",
-                "properties": {
-                  "name": {
-                    "description": "Name is the header name (e.g., \"Authorization\", \"X-API-Key\")",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  "secretKeyRef": {
-                    "description": "SecretKeyRef is a reference to a Kubernetes Secret key containing the header value",
-                    "properties": {
-                      "key": {
-                        "description": "Key is the key within the secret",
-                        "type": "string"
-                      },
-                      "name": {
-                        "description": "Name is the name of the secret",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "key",
-                      "name"
-                    ],
-                    "type": "object",
-                    "additionalProperties": false
-                  }
+                "key": {
+                  "description": "Key is the key within the secret",
+                  "type": "string"
                 },
-                "required": [
-                  "name",
-                  "secretKeyRef"
-                ],
-                "type": "object",
-                "additionalProperties": false
-              },
-              "type": "array",
-              "x-kubernetes-list-map-keys": [
-                "name"
-              ],
-              "x-kubernetes-list-type": "map"
-            },
-            "tracing": {
-              "description": "Tracing defines OpenTelemetry tracing configuration",
-              "properties": {
-                "enabled": {
-                  "default": false,
-                  "description": "Enabled controls whether OTLP tracing is sent",
-                  "type": "boolean"
-                },
-                "samplingRate": {
-                  "default": "0.05",
-                  "description": "SamplingRate is the trace sampling rate (0.0-1.0)",
-                  "pattern": "^(0(\\.\\d+)?|1(\\.0+)?)$",
+                "name": {
+                  "description": "Name is the name of the secret",
                   "type": "string"
                 }
               },
+              "required": [
+                "key",
+                "name"
+              ],
               "type": "object",
               "additionalProperties": false
             },
-            "useLegacyAttributes": {
-              "default": true,
-              "description": "UseLegacyAttributes controls whether legacy attribute names are emitted alongside\nthe new MCP OTEL semantic convention names. Defaults to true for backward compatibility.\nThis will change to false in a future release and eventually be removed.",
+            "insecureAllowHTTP": {
+              "default": false,
+              "description": "InsecureAllowHTTP allows HTTP (non-HTTPS) OIDC issuers for development/testing.\nWARNING: This is insecure and should NEVER be used in production.",
+              "type": "boolean"
+            },
+            "introspectionUrl": {
+              "description": "IntrospectionURL is the URL for token introspection endpoint",
+              "type": "string"
+            },
+            "issuer": {
+              "description": "Issuer is the OIDC issuer URL",
+              "type": "string"
+            },
+            "jwksAllowPrivateIP": {
+              "default": false,
+              "description": "JWKSAllowPrivateIP allows JWKS/OIDC endpoints on private IP addresses.\nNote: at runtime, if either JWKSAllowPrivateIP or ProtectedResourceAllowPrivateIP\nis true, private IPs are allowed for all OIDC HTTP requests (JWKS, discovery, introspection).",
+              "type": "boolean"
+            },
+            "jwksAuthTokenPath": {
+              "description": "JWKSAuthTokenPath is the path to file containing bearer token for JWKS/OIDC requests",
+              "type": "string"
+            },
+            "jwksUrl": {
+              "description": "JWKSURL is the URL to fetch the JWKS from",
+              "type": "string"
+            },
+            "protectedResourceAllowPrivateIP": {
+              "default": false,
+              "description": "ProtectedResourceAllowPrivateIP allows protected resource endpoint on private IP addresses.\nNote: at runtime, if either ProtectedResourceAllowPrivateIP or JWKSAllowPrivateIP\nis true, private IPs are allowed for all OIDC HTTP requests (JWKS, discovery, introspection).",
               "type": "boolean"
             }
           },
-          "type": "object",
-          "x-kubernetes-validations": [
-            {
-              "message": "a header name cannot appear in both headers and sensitiveHeaders",
-              "rule": "!has(self.headers) || !has(self.sensitiveHeaders) || self.sensitiveHeaders.all(sh, !(sh.name in self.headers))"
-            }
+          "required": [
+            "issuer"
           ],
+          "type": "object",
           "additionalProperties": false
         },
-        "prometheus": {
-          "description": "Prometheus defines Prometheus-specific configuration",
+        "kubernetesServiceAccount": {
+          "description": "KubernetesServiceAccount configures OIDC for Kubernetes service account token validation.\nOnly used when Type is \"kubernetesServiceAccount\".",
           "properties": {
-            "enabled": {
-              "default": false,
-              "description": "Enabled controls whether Prometheus metrics endpoint is exposed",
+            "introspectionUrl": {
+              "description": "IntrospectionURL is the URL for token introspection endpoint.\nIf empty, OIDC discovery will be used to automatically determine the introspection URL.",
+              "type": "string"
+            },
+            "issuer": {
+              "default": "https://kubernetes.default.svc",
+              "description": "Issuer is the OIDC issuer URL.",
+              "type": "string"
+            },
+            "jwksUrl": {
+              "description": "JWKSURL is the URL to fetch the JWKS from.\nIf empty, OIDC discovery will be used to automatically determine the JWKS URL.",
+              "type": "string"
+            },
+            "namespace": {
+              "description": "Namespace is the namespace of the service account.\nIf empty, uses the MCPServer's namespace.",
+              "type": "string"
+            },
+            "serviceAccount": {
+              "description": "ServiceAccount is the name of the service account to validate tokens for.\nIf empty, uses the pod's service account.",
+              "type": "string"
+            },
+            "useClusterAuth": {
+              "description": "UseClusterAuth enables using the Kubernetes cluster's CA bundle and service account token.\nWhen true, uses /var/run/secrets/kubernetes.io/serviceaccount/ca.crt for TLS verification\nand /var/run/secrets/kubernetes.io/serviceaccount/token for bearer token authentication.\nDefaults to true if not specified.",
               "type": "boolean"
             }
           },
           "type": "object",
           "additionalProperties": false
+        },
+        "type": {
+          "description": "Type is the type of OIDC configuration source",
+          "enum": [
+            "kubernetesServiceAccount",
+            "inline"
+          ],
+          "type": "string"
         }
       },
+      "required": [
+        "type"
+      ],
       "type": "object",
+      "x-kubernetes-validations": [
+        {
+          "message": "kubernetesServiceAccount must be set when type is 'kubernetesServiceAccount', and must not be set otherwise",
+          "rule": "self.type == 'kubernetesServiceAccount' ? has(self.kubernetesServiceAccount) : !has(self.kubernetesServiceAccount)"
+        },
+        {
+          "message": "inline must be set when type is 'inline', and must not be set otherwise",
+          "rule": "self.type == 'inline' ? has(self.inline) : !has(self.inline)"
+        }
+      ],
       "additionalProperties": false
     },
     "status": {
-      "description": "MCPTelemetryConfigStatus defines the observed state of MCPTelemetryConfig",
+      "description": "MCPOIDCConfigStatus defines the observed state of MCPOIDCConfig",
       "properties": {
         "conditions": {
-          "description": "Conditions represent the latest available observations of the MCPTelemetryConfig's state",
+          "description": "Conditions represent the latest available observations of the MCPOIDCConfig's state",
           "items": {
             "description": "Condition contains details for one aspect of the current state of this API Resource.",
             "properties": {
@@ -249,12 +235,12 @@
           "type": "string"
         },
         "observedGeneration": {
-          "description": "ObservedGeneration is the most recent generation observed for this MCPTelemetryConfig.",
+          "description": "ObservedGeneration is the most recent generation observed for this MCPOIDCConfig.",
           "format": "int64",
           "type": "integer"
         },
         "referencingWorkloads": {
-          "description": "ReferencingWorkloads lists workloads that reference this MCPTelemetryConfig",
+          "description": "ReferencingWorkloads is a list of workload resources that reference this MCPOIDCConfig.\nEach entry identifies the workload by kind and name.",
           "items": {
             "description": "WorkloadReference identifies a workload that references a shared configuration resource.\nNamespace is implicit \u2014 cross-namespace references are not supported.",
             "properties": {
