@@ -1,5 +1,5 @@
 {
-  "description": "MCPExternalAuthConfig is the Schema for the mcpexternalauthconfigs API.\nMCPExternalAuthConfig resources are namespace-scoped and can only be referenced by\nMCPServer resources within the same namespace. Cross-namespace references\nare not supported for security and isolation reasons.",
+  "description": "MCPExternalAuthConfig is the deprecated v1alpha1 version of the MCPExternalAuthConfig resource.",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -86,6 +86,10 @@
             "sessionNameClaim": {
               "default": "sub",
               "description": "SessionNameClaim is the JWT claim to use for role session name\nDefaults to \"sub\" to use the subject claim",
+              "type": "string"
+            },
+            "subjectProviderName": {
+              "description": "SubjectProviderName is the name of the upstream provider whose access token\nis used as the web identity token for STS AssumeRoleWithWebIdentity.\nThis field is used exclusively by VirtualMCPServer, where there is no\nupstream swap middleware to replace the bearer token before the strategy runs.\nWhen left empty and an embedded authorization server is configured on the\nVirtualMCPServer, the controller automatically populates this field with\nthe first configured upstream provider name. Set it explicitly to override\nthat default or to select a specific provider when multiple upstreams are\nconfigured.\nWhen no embedded auth server is present, the bearer token from the incoming\nrequest's Authorization header is used instead.",
               "type": "string"
             }
           },
@@ -429,6 +433,14 @@
                   "oauth2Config": {
                     "description": "OAuth2Config contains OAuth 2.0-specific configuration.\nRequired when Type is \"oauth2\", must be nil when Type is \"oidc\".",
                     "properties": {
+                      "additionalAuthorizationParams": {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "description": "AdditionalAuthorizationParams are extra query parameters to include in\nauthorization requests sent to the upstream provider.\nThis is useful for providers that require custom parameters, such as\nGoogle's access_type=offline for obtaining refresh tokens.\nFramework-managed parameters (response_type, client_id, redirect_uri,\nscope, state, code_challenge, code_challenge_method, nonce) are not allowed.",
+                        "maxProperties": 16,
+                        "type": "object"
+                      },
                       "authorizationEndpoint": {
                         "description": "AuthorizationEndpoint is the URL for the OAuth authorization endpoint.",
                         "pattern": "^https?://.*$",
@@ -502,7 +514,7 @@
                         "additionalProperties": false
                       },
                       "userInfo": {
-                        "description": "UserInfo contains configuration for fetching user information from the upstream provider.\nRequired for OAuth2 providers to resolve user identity.",
+                        "description": "UserInfo contains configuration for fetching user information from the upstream provider.\nWhen omitted, the embedded auth server runs in synthesis mode for this\nupstream: a non-PII subject derived from the access token, no Name/Email.\nUse this shape for upstreams with no userinfo surface (e.g., MCP\nauthorization servers per the MCP spec).",
                         "properties": {
                           "additionalHeaders": {
                             "additionalProperties": {
@@ -566,8 +578,7 @@
                     "required": [
                       "authorizationEndpoint",
                       "clientId",
-                      "tokenEndpoint",
-                      "userInfo"
+                      "tokenEndpoint"
                     ],
                     "type": "object",
                     "additionalProperties": false
@@ -575,6 +586,14 @@
                   "oidcConfig": {
                     "description": "OIDCConfig contains OIDC-specific configuration.\nRequired when Type is \"oidc\", must be nil when Type is \"oauth2\".",
                     "properties": {
+                      "additionalAuthorizationParams": {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "description": "AdditionalAuthorizationParams are extra query parameters to include in\nauthorization requests sent to the upstream provider.\nThis is useful for providers that require custom parameters, such as\nGoogle's access_type=offline for obtaining refresh tokens.\nNote: when using access_type=offline, also set explicit scopes to avoid\nthe default offline_access scope being sent alongside it.\nFramework-managed parameters (response_type, client_id, redirect_uri,\nscope, state, code_challenge, code_challenge_method, nonce) are not allowed.",
+                        "maxProperties": 16,
+                        "type": "object"
+                      },
                       "clientId": {
                         "description": "ClientID is the OAuth 2.0 client identifier registered with the upstream IDP.",
                         "type": "string"
@@ -608,7 +627,7 @@
                         "type": "string"
                       },
                       "scopes": {
-                        "description": "Scopes are the OAuth scopes to request from the upstream IDP.\nIf not specified, defaults to [\"openid\", \"offline_access\"].",
+                        "description": "Scopes are the OAuth scopes to request from the upstream IDP.\nIf not specified, defaults to [\"openid\", \"offline_access\"].\nWhen using additionalAuthorizationParams with provider-specific refresh token\nmechanisms (e.g., Google's access_type=offline), set explicit scopes to avoid\nsending both offline_access and the provider-specific parameter.",
                         "items": {
                           "type": "string"
                         },
