@@ -762,6 +762,20 @@
             "name"
           ],
           "x-kubernetes-list-type": "map"
+        },
+        "webhookConfigRef": {
+          "description": "WebhookConfigRef references a MCPWebhookConfig resource for webhook middleware configuration.\nThe referenced MCPWebhookConfig must exist in the same namespace as this MCPServer.",
+          "properties": {
+            "name": {
+              "description": "Name is the name of the MCPWebhookConfig resource",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object",
+          "additionalProperties": false
         }
       },
       "required": [
@@ -894,6 +908,10 @@
         },
         "url": {
           "description": "URL is the URL where the MCP server can be accessed",
+          "type": "string"
+        },
+        "webhookConfigHash": {
+          "description": "WebhookConfigHash is the hash of the referenced MCPWebhookConfig spec",
           "type": "string"
         }
       },
