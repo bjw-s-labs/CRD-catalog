@@ -1,5 +1,5 @@
 {
-  "description": "GrafanaNotificationPolicyRoute is the Schema for the grafananotificationpolicyroutes API",
+  "description": "CiliumLoadBalancerIPPool is a Kubernetes third-party resource which\nis used to defined pools of IPs which the operator can use to to allocate\nand advertise IPs for Services of type LoadBalancer.",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -13,104 +13,44 @@
       "type": "object"
     },
     "spec": {
-      "description": "GrafanaNotificationPolicyRouteSpec defines the desired state of GrafanaNotificationPolicyRoute",
+      "description": "Spec is a human readable description for a BGP load balancer\nip pool.",
       "properties": {
-        "active_time_intervals": {
-          "description": "active time intervals",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "continue": {
-          "description": "continue",
-          "type": "boolean"
-        },
-        "group_by": {
-          "description": "group by",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "group_interval": {
-          "description": "group interval",
+        "allowFirstLastIPs": {
+          "description": "AllowFirstLastIPs, if set to `Yes` or undefined means that the first and last IPs of each CIDR will be allocatable.\nIf `No`, these IPs will be reserved. This field is ignored for /{31,32} and /{127,128} CIDRs since\nreserving the first and last IPs would make the CIDRs unusable.",
+          "enum": [
+            "Yes",
+            "No"
+          ],
           "type": "string"
         },
-        "group_wait": {
-          "description": "group wait",
-          "type": "string"
-        },
-        "match_re": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "match re",
-          "type": "object"
-        },
-        "matchers": {
-          "description": "matchers",
+        "blocks": {
+          "description": "Blocks is a list of CIDRs comprising this IP Pool",
           "items": {
+            "description": "CiliumLoadBalancerIPPoolIPBlock describes a single IP block.",
             "properties": {
-              "isEqual": {
-                "description": "Deprecated: Does nothing and is not exported by Grafana",
-                "type": "boolean"
-              },
-              "isRegex": {
-                "description": "Deprecated: Does nothing and is not exported by Grafana",
-                "type": "boolean"
-              },
-              "name": {
-                "description": "name",
+              "cidr": {
+                "format": "cidr",
                 "type": "string"
               },
-              "value": {
-                "description": "value",
+              "start": {
+                "type": "string"
+              },
+              "stop": {
                 "type": "string"
               }
             },
-            "required": [
-              "isRegex",
-              "value"
-            ],
             "type": "object",
             "additionalProperties": false
           },
           "type": "array"
         },
-        "mute_time_intervals": {
-          "description": "mute time intervals",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+        "disabled": {
+          "default": false,
+          "description": "Disabled, if set to true means that no new IPs will be allocated from this pool.\nExisting allocations will not be removed from services.",
+          "type": "boolean"
         },
-        "object_matchers": {
-          "description": "object matchers",
-          "items": {
-            "description": "ObjectMatcher ObjectMatcher is a matcher that can be used to filter alerts.\n\nswagger:model ObjectMatcher",
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "type": "array"
-        },
-        "provenance": {
-          "description": "Deprecated: Does nothing",
-          "type": "string"
-        },
-        "receiver": {
-          "description": "receiver",
-          "minLength": 1,
-          "type": "string"
-        },
-        "repeat_interval": {
-          "description": "repeat interval",
-          "type": "string"
-        },
-        "routeSelector": {
-          "description": "selects GrafanaNotificationPolicyRoutes to merge in when specified\nmutually exclusive with Routes",
+        "serviceSelector": {
+          "description": "ServiceSelector selects a set of services which are eligible to receive IPs from this",
           "properties": {
             "matchExpressions": {
               "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
@@ -123,6 +63,12 @@
                   },
                   "operator": {
                     "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
+                    "enum": [
+                      "In",
+                      "NotIn",
+                      "Exists",
+                      "DoesNotExist"
+                    ],
                     "type": "string"
                   },
                   "values": {
@@ -146,6 +92,9 @@
             },
             "matchLabels": {
               "additionalProperties": {
+                "description": "MatchLabelsValue represents the value from the MatchLabels {key,value} pair.",
+                "maxLength": 63,
+                "pattern": "^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$",
                 "type": "string"
               },
               "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
@@ -155,23 +104,16 @@
           "type": "object",
           "x-kubernetes-map-type": "atomic",
           "additionalProperties": false
-        },
-        "routes": {
-          "description": "routes, mutually exclusive with RouteSelector",
-          "x-kubernetes-preserve-unknown-fields": true
         }
       },
-      "required": [
-        "receiver"
-      ],
       "type": "object",
       "additionalProperties": false
     },
     "status": {
-      "description": "The most recent observed state of a Grafana resource",
+      "description": "Status is the status of the IP Pool.\n\nIt might be possible for users to define overlapping IP Pools, we can't validate or enforce non-overlapping pools\nduring object creation. The Cilium operator will do this validation and update the status to reflect the ability\nto allocate IPs from this pool.",
       "properties": {
         "conditions": {
-          "description": "Results when synchronizing resource with Grafana instances",
+          "description": "Current service state",
           "items": {
             "description": "Condition contains details for one aspect of the current state of this API Resource.",
             "properties": {
@@ -224,12 +166,11 @@
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
-        },
-        "lastResync": {
-          "description": "Last time the resource was synchronized with Grafana instances",
-          "format": "date-time",
-          "type": "string"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "type"
+          ],
+          "x-kubernetes-list-type": "map"
         }
       },
       "type": "object",
@@ -237,6 +178,7 @@
     }
   },
   "required": [
+    "metadata",
     "spec"
   ],
   "type": "object"

@@ -1,5 +1,5 @@
 {
-  "description": "GrafanaNotificationPolicyRoute is the Schema for the grafananotificationpolicyroutes API",
+  "description": "CiliumL2AnnouncementPolicy is a Kubernetes third-party resource which\nis used to defined which nodes should announce what services on the\nL2 network.",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -13,104 +13,25 @@
       "type": "object"
     },
     "spec": {
-      "description": "GrafanaNotificationPolicyRouteSpec defines the desired state of GrafanaNotificationPolicyRoute",
+      "description": "Spec is a human readable description of a L2 announcement policy",
       "properties": {
-        "active_time_intervals": {
-          "description": "active time intervals",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "continue": {
-          "description": "continue",
+        "externalIPs": {
+          "description": "If true, the external IPs of the services are announced",
           "type": "boolean"
         },
-        "group_by": {
-          "description": "group by",
+        "interfaces": {
+          "description": "A list of regular expressions that express which network interface(s) should be used\nto announce the services over. If nil, all network interfaces are used.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
-        "group_interval": {
-          "description": "group interval",
-          "type": "string"
+        "loadBalancerIPs": {
+          "description": "If true, the loadbalancer IPs of the services are announced\n\nIf nil this policy applies to all services.",
+          "type": "boolean"
         },
-        "group_wait": {
-          "description": "group wait",
-          "type": "string"
-        },
-        "match_re": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "match re",
-          "type": "object"
-        },
-        "matchers": {
-          "description": "matchers",
-          "items": {
-            "properties": {
-              "isEqual": {
-                "description": "Deprecated: Does nothing and is not exported by Grafana",
-                "type": "boolean"
-              },
-              "isRegex": {
-                "description": "Deprecated: Does nothing and is not exported by Grafana",
-                "type": "boolean"
-              },
-              "name": {
-                "description": "name",
-                "type": "string"
-              },
-              "value": {
-                "description": "value",
-                "type": "string"
-              }
-            },
-            "required": [
-              "isRegex",
-              "value"
-            ],
-            "type": "object",
-            "additionalProperties": false
-          },
-          "type": "array"
-        },
-        "mute_time_intervals": {
-          "description": "mute time intervals",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "object_matchers": {
-          "description": "object matchers",
-          "items": {
-            "description": "ObjectMatcher ObjectMatcher is a matcher that can be used to filter alerts.\n\nswagger:model ObjectMatcher",
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "type": "array"
-        },
-        "provenance": {
-          "description": "Deprecated: Does nothing",
-          "type": "string"
-        },
-        "receiver": {
-          "description": "receiver",
-          "minLength": 1,
-          "type": "string"
-        },
-        "repeat_interval": {
-          "description": "repeat interval",
-          "type": "string"
-        },
-        "routeSelector": {
-          "description": "selects GrafanaNotificationPolicyRoutes to merge in when specified\nmutually exclusive with Routes",
+        "nodeSelector": {
+          "description": "NodeSelector selects a group of nodes which will announce the IPs for\nthe services selected by the service selector.\n\nIf nil this policy applies to all nodes.",
           "properties": {
             "matchExpressions": {
               "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
@@ -123,6 +44,12 @@
                   },
                   "operator": {
                     "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
+                    "enum": [
+                      "In",
+                      "NotIn",
+                      "Exists",
+                      "DoesNotExist"
+                    ],
                     "type": "string"
                   },
                   "values": {
@@ -146,6 +73,9 @@
             },
             "matchLabels": {
               "additionalProperties": {
+                "description": "MatchLabelsValue represents the value from the MatchLabels {key,value} pair.",
+                "maxLength": 63,
+                "pattern": "^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$",
                 "type": "string"
               },
               "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
@@ -156,22 +86,71 @@
           "x-kubernetes-map-type": "atomic",
           "additionalProperties": false
         },
-        "routes": {
-          "description": "routes, mutually exclusive with RouteSelector",
-          "x-kubernetes-preserve-unknown-fields": true
+        "serviceSelector": {
+          "description": "ServiceSelector selects a set of services which will be announced over L2 networks.\nThe loadBalancerClass for a service must be nil or specify a supported class, e.g.\n\"io.cilium/l2-announcer\". Refer to the following document for additional details\nregarding load balancer classes:\n\n  https://kubernetes.io/docs/concepts/services-networking/service/#load-balancer-class\n\nIf nil this policy applies to all services.",
+          "properties": {
+            "matchExpressions": {
+              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+              "items": {
+                "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
+                "properties": {
+                  "key": {
+                    "description": "key is the label key that the selector applies to.",
+                    "type": "string"
+                  },
+                  "operator": {
+                    "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
+                    "enum": [
+                      "In",
+                      "NotIn",
+                      "Exists",
+                      "DoesNotExist"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "description": "values is an array of string values. If the operator is In or NotIn,\nthe values array must be non-empty. If the operator is Exists or DoesNotExist,\nthe values array must be empty. This array is replaced during a strategic\nmerge patch.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array",
+                    "x-kubernetes-list-type": "atomic"
+                  }
+                },
+                "required": [
+                  "key",
+                  "operator"
+                ],
+                "type": "object",
+                "additionalProperties": false
+              },
+              "type": "array",
+              "x-kubernetes-list-type": "atomic"
+            },
+            "matchLabels": {
+              "additionalProperties": {
+                "description": "MatchLabelsValue represents the value from the MatchLabels {key,value} pair.",
+                "maxLength": 63,
+                "pattern": "^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$",
+                "type": "string"
+              },
+              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+              "type": "object"
+            }
+          },
+          "type": "object",
+          "x-kubernetes-map-type": "atomic",
+          "additionalProperties": false
         }
       },
-      "required": [
-        "receiver"
-      ],
       "type": "object",
       "additionalProperties": false
     },
     "status": {
-      "description": "The most recent observed state of a Grafana resource",
+      "description": "Status is the status of the policy.",
       "properties": {
         "conditions": {
-          "description": "Results when synchronizing resource with Grafana instances",
+          "description": "Current service state",
           "items": {
             "description": "Condition contains details for one aspect of the current state of this API Resource.",
             "properties": {
@@ -224,12 +203,11 @@
             "type": "object",
             "additionalProperties": false
           },
-          "type": "array"
-        },
-        "lastResync": {
-          "description": "Last time the resource was synchronized with Grafana instances",
-          "format": "date-time",
-          "type": "string"
+          "type": "array",
+          "x-kubernetes-list-map-keys": [
+            "type"
+          ],
+          "x-kubernetes-list-type": "map"
         }
       },
       "type": "object",
@@ -237,7 +215,7 @@
     }
   },
   "required": [
-    "spec"
+    "metadata"
   ],
   "type": "object"
 }
